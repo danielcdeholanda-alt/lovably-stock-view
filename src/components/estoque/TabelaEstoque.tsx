@@ -29,11 +29,14 @@ export function TabelaEstoque({ itens }: { itens: ItemEstoque[] }) {
       return (
         i.codigo.toLowerCase().includes(q) ||
         i.produto.toLowerCase().includes(q) ||
-        i.armazem.toLowerCase().includes(q) ||
-        String(i.armario) === q
+        i.area.toLowerCase() === q ||
+        `${i.area}-${i.rua}`.toLowerCase().includes(q)
       );
     });
   }, [itens, busca, filtro]);
+
+  const visiveis = filtrados.slice(0, 300);
+
 
   return (
     <section className="rounded-md border border-border bg-card">
@@ -65,7 +68,7 @@ export function TabelaEstoque({ itens }: { itens: ItemEstoque[] }) {
             <input
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar código, produto, armário…"
+              placeholder="Buscar código, produto, área, rua…"
               className="w-56 rounded-sm border border-input bg-background py-1 pl-7 pr-2 text-xs outline-none focus:ring-2 focus:ring-ring"
             />
           </label>
@@ -81,10 +84,10 @@ export function TabelaEstoque({ itens }: { itens: ItemEstoque[] }) {
                 "Produto",
                 "Validade",
                 "Dias",
-                "Nível",
-                "Armário",
-                "Qtde.",
-                "Armazém",
+                "Área",
+                "Rua",
+                "Palete",
+                "Caixas",
                 "Status",
               ].map((h) => (
                 <th key={h} className="px-3 py-2 text-left font-medium whitespace-nowrap">
@@ -94,12 +97,12 @@ export function TabelaEstoque({ itens }: { itens: ItemEstoque[] }) {
             </tr>
           </thead>
           <tbody>
-            {filtrados.map((i, idx) => {
+            {visiveis.map((i, idx) => {
               const s = statusValidade(i.validade);
               const dias = diasParaVencer(i.validade);
               return (
                 <tr
-                  key={`${i.codigo}-${i.armario}-${i.nivel}-${idx}`}
+                  key={`${i.area}-${i.rua}-${i.posicao}-${idx}`}
                   className="border-t border-border/60 hover:bg-accent/40"
                 >
                   <td className="px-3 py-2 font-mono text-xs">{i.codigo}</td>
@@ -108,10 +111,10 @@ export function TabelaEstoque({ itens }: { itens: ItemEstoque[] }) {
                     {new Date(i.validade + "T00:00:00Z").toLocaleDateString("pt-BR")}
                   </td>
                   <td className="px-3 py-2 font-mono text-xs">{dias}</td>
-                  <td className="px-3 py-2 font-mono text-xs">N{i.nivel}</td>
-                  <td className="px-3 py-2 font-mono text-xs">{i.armario}</td>
+                  <td className="px-3 py-2 font-mono text-xs">{i.area}</td>
+                  <td className="px-3 py-2 font-mono text-xs">{i.rua}</td>
+                  <td className="px-3 py-2 font-mono text-xs">{i.posicao}</td>
                   <td className="px-3 py-2 font-mono text-xs">{i.quantidade}</td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">{i.armazem}</td>
                   <td className="px-3 py-2">
                     <span className={cn("rounded-sm border px-2 py-0.5 text-[11px]", TONE[s])}>
                       {STATUS_LABEL[s]}
@@ -130,6 +133,11 @@ export function TabelaEstoque({ itens }: { itens: ItemEstoque[] }) {
           </tbody>
         </table>
       </div>
+      <p className="border-t border-border px-4 py-2 text-xs text-muted-foreground">
+        Exibindo {visiveis.length.toLocaleString("pt-BR")} de{" "}
+        {filtrados.length.toLocaleString("pt-BR")} paletes
+      </p>
+
     </section>
   );
 }
