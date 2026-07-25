@@ -1,40 +1,40 @@
-import { CAPACIDADE_ARMARIO, statusValidade, type ItemEstoque } from "@/data/estoque";
+import { CAPACIDADE_TOTAL, RUAS, statusValidade, type ItemEstoque } from "@/data/estoque";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, Boxes, PackageCheck, Warehouse } from "lucide-react";
 
 export function Kpis({ itens }: { itens: ItemEstoque[] }) {
-  const totalUnidades = itens.reduce((s, i) => s + i.quantidade, 0);
-  const capacidadeTotal = Object.values(CAPACIDADE_ARMARIO).reduce((s, c) => s + c, 0) * 6;
-  const ocupacao = Math.round((totalUnidades / capacidadeTotal) * 100);
+  const paletes = itens.length;
+  const caixas = itens.reduce((s, i) => s + i.quantidade, 0);
+  const ocupacao = Math.round((paletes / CAPACIDADE_TOTAL) * 100);
   const criticos = itens.filter((i) => statusValidade(i.validade) === "critico").length;
   const vencidos = itens.filter((i) => statusValidade(i.validade) === "vencido").length;
   const skus = new Set(itens.map((i) => i.codigo)).size;
 
   const cards = [
     {
-      label: "Unidades em estoque",
-      value: totalUnidades.toLocaleString("pt-BR"),
-      hint: `${itens.length} posições ocupadas`,
+      label: "Paletes em estoque",
+      value: paletes.toLocaleString("pt-BR"),
+      hint: `${caixas.toLocaleString("pt-BR")} caixas · ${RUAS.length} ruas`,
       icon: Boxes,
       tone: "text-primary",
     },
     {
       label: "Ocupação do armazém",
       value: `${ocupacao}%`,
-      hint: `${capacidadeTotal.toLocaleString("pt-BR")} posições-capacidade`,
+      hint: `${CAPACIDADE_TOTAL.toLocaleString("pt-BR")} posições de palete`,
       icon: Warehouse,
       tone: "text-chart-3",
     },
     {
       label: "Validade crítica (≤30d)",
-      value: String(criticos),
+      value: criticos.toLocaleString("pt-BR"),
       hint: "priorizar saída FIFO",
       icon: AlertTriangle,
       tone: "text-crit",
     },
     {
       label: "Vencidos / SKUs ativos",
-      value: `${vencidos} / ${skus}`,
+      value: `${vencidos.toLocaleString("pt-BR")} / ${skus}`,
       hint: "bloquear e dar baixa",
       icon: PackageCheck,
       tone: vencidos ? "text-dead" : "text-ok",
