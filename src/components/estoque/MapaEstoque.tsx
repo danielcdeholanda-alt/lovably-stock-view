@@ -1,42 +1,48 @@
 import { useMemo, useState } from "react";
 import {
-  ARMARIOS,
-  NIVEIS,
-  buildMapa,
+  AREAS,
+  buildMapaArea,
+  capacidadeArea,
+  ruasDaArea,
   statusValidade,
-  type CelulaMapa,
+  type CelulaPalete,
   type ItemEstoque,
 } from "@/data/estoque";
 import { cn } from "@/lib/utils";
 
-function corOcupacao(c: CelulaMapa) {
-  if (c.quantidade === 0) return "bg-secondary/60 text-muted-foreground";
-  const s = c.item ? statusValidade(c.item.validade) : "ok";
-  if (s === "vencido") return "bg-dead/85 text-background";
-  if (s === "critico") return "bg-crit/85 text-background";
-  if (c.ocupacao >= 0.85) return "bg-warn/85 text-background";
-  return "bg-ok/80 text-background";
+function corPalete(c: CelulaPalete) {
+  if (!c.item) return "bg-secondary/60";
+  const s = statusValidade(c.item.validade);
+  if (s === "vencido") return "bg-dead/85";
+  if (s === "critico") return "bg-crit/85";
+  if (s === "atencao") return "bg-warn/85";
+  return "bg-ok/80";
 }
 
 export function MapaEstoque({ itens }: { itens: ItemEstoque[] }) {
-  const mapa = useMemo(() => buildMapa(itens), [itens]);
-  const [sel, setSel] = useState<CelulaMapa | null>(null);
+  const [area, setArea] = useState(AREAS[0]);
+  const [sel, setSel] = useState<CelulaPalete | null>(null);
+  const mapa = useMemo(() => buildMapaArea(itens, area), [itens, area]);
+  const ruas = ruasDaArea(area);
+  const capacidade = capacidadeArea(area);
+  const ocupados = itens.filter((i) => i.area === area).length;
 
   return (
     <section className="rounded-md border border-border bg-card">
       <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border px-4 py-3">
         <div>
-          <h2 className="font-semibold tracking-tight">Mapa de estoque</h2>
+          <h2 className="font-semibold tracking-tight">Mapa de estoque — paletes no chão</h2>
           <p className="text-xs text-muted-foreground">
-            Armários 1–43 × níveis 1–6 · cor indica validade e ocupação da posição
+            Área {area} · {ruas.length} ruas · {ocupados.toLocaleString("pt-BR")} de{" "}
+            {capacidade.toLocaleString("pt-BR")} posições de palete ocupadas
           </p>
         </div>
         <ul className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
           {[
-            ["bg-secondary/60", "Vazio"],
-            ["bg-ok/80", "Ocupado"],
-            ["bg-warn/85", "Cheio ≥85%"],
-            ["bg-crit/85", "Validade ≤30d"],
+            ["bg-secondary/60", "Livre"],
+            ["bg-ok/80", "Regular"],
+            ["bg-warn/85", "Atenção ≤90d"],
+            ["bg-crit/85", "Crítico ≤30d"],
             ["bg-dead/85", "Vencido"],
           ].map(([c, l]) => (
             <li key={l} className="flex items-center gap-1.5">
@@ -47,37 +53,48 @@ export function MapaEstoque({ itens }: { itens: ItemEstoque[] }) {
         </ul>
       </header>
 
-      <div className="overflow-x-auto p-4">
-        <div className="min-w-[900px]">
-          <div className="mb-1 flex gap-[3px] pl-10">
-            {ARMARIOS.map((a) => (
-              <span
-                key={a}
-                className="w-5 shrink-0 text-center font-mono text-[9px] text-muted-foreground"
-              >
-                {a}
-              </span>
-            ))}
-          </div>
+      <div className="flex flex-wrap gap-2 border-b border-border px-4 py-2">
+        {AREAS.map((a) => (
+          <button
+            key={a}
+            type="button"
+            onClick={() => {
+              setArea(a);
+              setSel(null);
+            }}
+            className={cn(
+              "rounded-sm border px-3 py-1 text-xs font-medium transition",
+              a === area
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Área {a}
+          </button>
+        ))}
+      </div>
+
+      <div className="max-h-[560px] overflow-auto p-4">
+        <div className="space-y-[3px]">
           {mapa.map((linha, i) => (
-            <div key={NIVEIS[i]} className="mb-[3px] flex items-center gap-[3px]">
-              <span className="w-10 shrink-0 pr-2 text-right font-mono text-[10px] text-muted-foreground">
-                N{NIVEIS[i]}
+            <div key={ruas[i].rua} className="flex items-center gap-[3px]">
+              <span className="w-14 shrink-0 pr-2 text-right font-mono text-[10px] text-muted-foreground">
+                {area}-{String(ruas[i].rua).padStart(2, "0")}
               </span>
               {linha.map((c) => (
                 <button
-                  key={`${c.armario}-${c.nivel}`}
+                  key={c.posicao}
                   type="button"
                   onClick={() => setSel(c)}
-                  title={`Armário ${c.armario} · Nível ${c.nivel} · ${c.quantidade}/${c.capacidade}`}
+                  title={`${c.area}-${c.rua} · palete ${c.posicao}${
+                    c.item ? ` · ${c.item.codigo}` : " · livre"
+                  }`}
                   className={cn(
-                    "h-5 w-5 shrink-0 rounded-sm text-[8px] font-medium transition hover:ring-2 hover:ring-ring",
-                    corOcupacao(c),
-                    sel?.armario === c.armario && sel?.nivel === c.nivel && "ring-2 ring-ring",
+                    "h-3.5 w-3.5 shrink-0 rounded-[2px] transition hover:ring-2 hover:ring-ring",
+                    corPalete(c),
+                    sel?.rua === c.rua && sel?.posicao === c.posicao && "ring-2 ring-ring",
                   )}
-                >
-                  {c.quantidade || ""}
-                </button>
+                />
               ))}
             </div>
           ))}
@@ -88,12 +105,12 @@ export function MapaEstoque({ itens }: { itens: ItemEstoque[] }) {
         {sel ? (
           sel.item ? (
             <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-4">
-              <Info label="Posição" value={`Armário ${sel.armario} · Nível ${sel.nivel}`} />
-              <Info label="Produto" value={`${sel.item.codigo} — ${sel.item.produto}`} />
               <Info
-                label="Quantidade"
-                value={`${sel.quantidade} / ${sel.capacidade} (${Math.round(sel.ocupacao * 100)}%)`}
+                label="Posição"
+                value={`Área ${sel.area} · Rua ${sel.rua} · Palete ${sel.posicao}`}
               />
+              <Info label="Produto" value={`${sel.item.codigo} — ${sel.item.produto}`} />
+              <Info label="Quantidade" value={`${sel.item.quantidade} caixas`} />
               <Info
                 label="Validade"
                 value={new Date(sel.item.validade + "T00:00:00Z").toLocaleDateString("pt-BR")}
@@ -102,12 +119,13 @@ export function MapaEstoque({ itens }: { itens: ItemEstoque[] }) {
             </div>
           ) : (
             <p className="text-muted-foreground">
-              Armário {sel.armario} · Nível {sel.nivel} — posição livre (capacidade {sel.capacidade}
-              ).
+              Área {sel.area} · Rua {sel.rua} · Palete {sel.posicao} — posição livre.
             </p>
           )
         ) : (
-          <p className="text-muted-foreground">Selecione uma posição do mapa para ver detalhes.</p>
+          <p className="text-muted-foreground">
+            Selecione uma posição de palete no mapa para ver detalhes.
+          </p>
         )}
       </div>
     </section>
