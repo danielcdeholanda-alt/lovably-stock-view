@@ -91,10 +91,10 @@ function buildItens(): ItemEstoque[] {
   const itens: ItemEstoque[] = [];
 
   for (const r of RUAS) {
-    // ocupação variável por rua (0–95% dos paletes)
+    // Paletes ficam no chão: ocupação sempre contígua, do início da rua até o último palete.
     const taxa = rnd() * 0.95;
-    for (let pos = 1; pos <= r.paletes; pos++) {
-      if (rnd() > taxa) continue;
+    const ocupados = Math.round(r.paletes * taxa);
+    for (let pos = 1; pos <= ocupados; pos++) {
       const p = PRODUTOS[Math.floor(rnd() * PRODUTOS.length)];
       const diasValidade = Math.round(-25 + rnd() * 320);
       const validade = new Date(HOJE.getTime() + diasValidade * 86400000);
@@ -110,6 +110,7 @@ function buildItens(): ItemEstoque[] {
       });
     }
   }
+
   return itens.sort((a, b) => a.validade.localeCompare(b.validade));
 }
 
