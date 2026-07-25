@@ -9,22 +9,25 @@ import { Warehouse } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Controle de Estoque FIFO | Painel do Armazém" },
+      { title: "Controle de Estoque FIFO | Mapa de Paletes" },
       {
         name: "description",
         content:
-          "Painel de controle de estoque: mapa de armários por nível, ocupação, curva de validade e lista FIFO das posições.",
+          "Painel de controle de estoque: mapa de paletes por área e rua, ocupação do armazém, curva de validade e lista FIFO das posições.",
       },
-      { property: "og:title", content: "Controle de Estoque FIFO | Painel do Armazém" },
+      { property: "og:title", content: "Controle de Estoque FIFO | Mapa de Paletes" },
       {
         property: "og:description",
         content:
-          "Mapa de estoque por armário e nível, ocupação do armazém e alertas de validade em um só painel.",
+          "Mapa de estoque por área, rua e posição de palete, com ocupação e alertas de validade em um só painel.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Index,
 });
+
 
 function Index() {
   return (
