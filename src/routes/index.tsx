@@ -43,7 +43,8 @@ function Index() {
                 Controle de Estoque · FIFO
               </h1>
               <p className="text-xs text-muted-foreground">
-                Mapa de estoque — 43 armários × 6 níveis · base FIFO-01
+                Mapa de paletes — áreas A–F · ruas e posições de palete no chão
+
               </p>
             </div>
           </div>
