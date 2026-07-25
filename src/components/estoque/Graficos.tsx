@@ -51,8 +51,8 @@ export function Graficos({ itens }: { itens: ItemEstoque[] }) {
                 color: "var(--popover-foreground)",
               }}
             />
-            <Bar dataKey="ocupados" stackId="a" fill="var(--chart-1)" />
-            <Bar dataKey="livres" stackId="a" fill="var(--secondary)" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="ocupados" stackId="a" fill="var(--chart-1)" isAnimationActive={false} />
+            <Bar dataKey="livres" stackId="a" fill="var(--secondary)" radius={[3, 3, 0, 0]} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
       </div>
