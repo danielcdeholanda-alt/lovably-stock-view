@@ -29,11 +29,14 @@ export function TabelaEstoque({ itens }: { itens: ItemEstoque[] }) {
       return (
         i.codigo.toLowerCase().includes(q) ||
         i.produto.toLowerCase().includes(q) ||
-        i.armazem.toLowerCase().includes(q) ||
-        String(i.armario) === q
+        i.area.toLowerCase() === q ||
+        `${i.area}-${i.rua}`.toLowerCase().includes(q)
       );
     });
   }, [itens, busca, filtro]);
+
+  const visiveis = filtrados.slice(0, 300);
+
 
   return (
     <section className="rounded-md border border-border bg-card">
