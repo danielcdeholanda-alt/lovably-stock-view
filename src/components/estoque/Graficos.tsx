@@ -68,7 +68,17 @@ export function Graficos({ itens }: { itens: ItemEstoque[] }) {
         <p className="mb-3 text-xs text-muted-foreground">Posições por faixa de vencimento</p>
         <ResponsiveContainer width="100%" height={200}>
           <PieChart>
-            <Pie data={porStatus} dataKey="value" innerRadius={50} outerRadius={80} paddingAngle={2}>
+            <Pie
+              data={porStatus}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={50}
+              outerRadius={80}
+              paddingAngle={2}
+              isAnimationActive={false}
+            >
               {porStatus.map((d) => (
                 <Cell key={d.key} fill={STATUS_COLORS[d.key]} stroke="var(--card)" />
               ))}
