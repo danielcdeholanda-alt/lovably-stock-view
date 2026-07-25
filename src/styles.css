@@ -148,3 +148,14 @@
     color: var(--color-foreground);
   }
 }
+
+@theme inline {
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-crit: var(--crit);
+  --color-dead: var(--dead);
+  --font-sans:
+    "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    "JetBrains Mono", ui-monospace, monospace;
+}
