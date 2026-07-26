@@ -1,14 +1,17 @@
 // Estrutura real do armazém: áreas → ruas → posições de palete (paletes no chão).
+// Os dados de estoque vêm do banco (produtos, paletes e movimentações) — nada é gerado aqui.
 
 export type ItemEstoque = {
+  id: string;
   codigo: string;
   produto: string;
   descricao: string;
-  validade: string; // ISO
+  validade: string; // ISO (yyyy-mm-dd)
   area: string;
   rua: number;
   posicao: number;
   quantidade: number; // caixas no palete
+  lote: string | null;
 };
 
 export type BlocoRua = { ruas: number; paletesPorRua: number };
@@ -54,72 +57,23 @@ export function capacidadeArea(area: string) {
   return ruasDaArea(area).reduce((s, r) => s + r.paletes, 0);
 }
 
+export function capacidadeRua(area: string, rua: number) {
+  return RUAS.find((r) => r.area === area && r.rua === rua)?.paletes ?? 0;
+}
+
 export const CAPACIDADE_TOTAL = RUAS.reduce((s, r) => s + r.paletes, 0);
 
-const PRODUTOS: { codigo: string; produto: string; descricao: string }[] = [
-  { codigo: "P-1001", produto: "Farinha de Trigo", descricao: "Farinha de trigo tipo 1 - saco 25kg" },
-  { codigo: "P-1002", produto: "Açúcar Refinado", descricao: "Açúcar refinado - fardo 30x1kg" },
-  { codigo: "P-1003", produto: "Óleo de Soja", descricao: "Óleo de soja refinado - caixa 20x900ml" },
-  { codigo: "P-1004", produto: "Arroz Parboilizado", descricao: "Arroz parboilizado tipo 1 - fardo 30x1kg" },
-  { codigo: "P-1005", produto: "Feijão Carioca", descricao: "Feijão carioca tipo 1 - fardo 30x1kg" },
-  { codigo: "P-1006", produto: "Leite UHT Integral", descricao: "Leite UHT integral - caixa 12x1L" },
-  { codigo: "P-1007", produto: "Café Torrado", descricao: "Café torrado e moído - fardo 20x500g" },
-  { codigo: "P-1008", produto: "Macarrão Espaguete", descricao: "Macarrão espaguete sêmola - fardo 20x500g" },
-  { codigo: "P-1009", produto: "Molho de Tomate", descricao: "Molho de tomate tradicional - caixa 24x340g" },
-  { codigo: "P-1010", produto: "Sal Refinado", descricao: "Sal refinado iodado - fardo 30x1kg" },
-  { codigo: "P-1011", produto: "Margarina", descricao: "Margarina cremosa 80% lipídios - caixa 12x500g" },
-  { codigo: "P-1012", produto: "Biscoito Cream Cracker", descricao: "Biscoito cream cracker - caixa 20x400g" },
-  { codigo: "P-1013", produto: "Achocolatado em Pó", descricao: "Achocolatado em pó - caixa 12x400g" },
-  { codigo: "P-1014", produto: "Fermento Químico", descricao: "Fermento químico em pó - caixa 24x100g" },
-  { codigo: "P-1015", produto: "Amido de Milho", descricao: "Amido de milho - caixa 24x500g" },
-  { codigo: "P-1016", produto: "Vinagre de Álcool", descricao: "Vinagre de álcool - caixa 12x750ml" },
-];
-
-// Gerador determinístico (LCG) para manter os dados estáveis entre renders/SSR.
-function makeRandom(seed: number) {
-  let s = seed;
-  return () => {
-    s = (s * 1664525 + 1013904223) % 4294967296;
-    return s / 4294967296;
-  };
+function hojeUTC() {
+  const d = new Date();
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
-export const HOJE = new Date("2026-07-25T00:00:00Z");
-
-function buildItens(): ItemEstoque[] {
-  const rnd = makeRandom(20260725);
-  const itens: ItemEstoque[] = [];
-
-  for (const r of RUAS) {
-    // Paletes ficam no chão: ocupação sempre contígua, do início da rua até o último palete.
-    const taxa = rnd() * 0.95;
-    const ocupados = Math.round(r.paletes * taxa);
-    for (let pos = 1; pos <= ocupados; pos++) {
-      const p = PRODUTOS[Math.floor(rnd() * PRODUTOS.length)];
-      const diasValidade = Math.round(-25 + rnd() * 320);
-      const validade = new Date(HOJE.getTime() + diasValidade * 86400000);
-      itens.push({
-        codigo: p.codigo,
-        produto: p.produto,
-        descricao: p.descricao,
-        validade: validade.toISOString().slice(0, 10),
-        area: r.area,
-        rua: r.rua,
-        posicao: pos,
-        quantidade: 20 + Math.floor(rnd() * 60),
-      });
-    }
-  }
-
-  return itens.sort((a, b) => a.validade.localeCompare(b.validade));
-}
-
-export const ITENS: ItemEstoque[] = buildItens();
+export const HOJE = new Date(hojeUTC());
 
 export type StatusValidade = "vencido" | "critico" | "atencao" | "ok";
 
 export function diasParaVencer(validade: string) {
-  return Math.round((new Date(validade + "T00:00:00Z").getTime() - HOJE.getTime()) / 86400000);
+  return Math.round((new Date(validade + "T00:00:00Z").getTime() - hojeUTC()) / 86400000);
 }
 
 export function statusValidade(validade: string): StatusValidade {
