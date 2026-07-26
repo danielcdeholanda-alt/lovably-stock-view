@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Toaster } from "sonner";
 import { Kpis } from "@/components/estoque/Kpis";
 import { MapaEstoque } from "@/components/estoque/MapaEstoque";
 import { Graficos } from "@/components/estoque/Graficos";
 import { TabelaEstoque } from "@/components/estoque/TabelaEstoque";
-import { ITENS, HOJE } from "@/data/estoque";
+import { PainelMovimentacao } from "@/components/estoque/PainelMovimentacao";
+import { useEstoque } from "@/lib/estoque-queries";
+import { HOJE } from "@/data/estoque";
 import { Warehouse } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -28,10 +31,12 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-
 function Index() {
+  const { data: itens = [], isLoading, error } = useEstoque();
+
   return (
     <main className="min-h-screen bg-background">
+      <Toaster position="top-right" theme="dark" />
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-3 px-4 py-4">
           <div className="flex items-center gap-3">
@@ -44,7 +49,6 @@ function Index() {
               </h1>
               <p className="text-xs text-muted-foreground">
                 Mapa de paletes — áreas A–F · ruas e posições de palete no chão
-
               </p>
             </div>
           </div>
@@ -55,10 +59,17 @@ function Index() {
       </header>
 
       <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 py-5">
-        <Kpis itens={ITENS} />
-        <MapaEstoque itens={ITENS} />
-        <Graficos itens={ITENS} />
-        <TabelaEstoque itens={ITENS} />
+        {error && (
+          <p className="rounded-md border border-dead/40 bg-dead/10 px-4 py-3 text-sm text-dead">
+            Não foi possível carregar o estoque: {(error as Error).message}
+          </p>
+        )}
+        <Kpis itens={itens} />
+        <PainelMovimentacao itens={itens} />
+        <MapaEstoque itens={itens} />
+        <Graficos itens={itens} />
+        <TabelaEstoque itens={itens} />
+        {isLoading && <p className="text-xs text-muted-foreground">Carregando estoque…</p>}
       </div>
     </main>
   );
