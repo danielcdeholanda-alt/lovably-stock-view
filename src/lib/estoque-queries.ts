@@ -134,8 +134,8 @@ export function useRegistrarEntrada() {
         p_rua: p.rua,
         p_quantidade: p.quantidade,
         p_validade: p.validade,
-        p_lote: p.lote || null,
-        p_observacao: p.observacao || null,
+        p_lote: p.lote || undefined,
+        p_observacao: p.observacao || undefined,
       });
       if (error) throw error;
     },
@@ -149,7 +149,7 @@ export function useRegistrarSaida() {
     mutationFn: async (p: { palete_id: string; observacao?: string }) => {
       const { error } = await supabase.rpc("registrar_saida", {
         p_palete_id: p.palete_id,
-        p_observacao: p.observacao || null,
+        p_observacao: p.observacao || undefined,
       });
       if (error) throw error;
     },
