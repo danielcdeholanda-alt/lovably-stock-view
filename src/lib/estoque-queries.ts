@@ -127,17 +127,26 @@ export function useRegistrarEntrada() {
       validade: string;
       lote?: string;
       observacao?: string;
+      paletes?: number;
     }) => {
-      const { error } = await supabase.rpc("registrar_entrada", {
-        p_produto_id: p.produto_id,
-        p_area: p.area,
-        p_rua: p.rua,
-        p_quantidade: p.quantidade,
-        p_validade: p.validade,
-        p_lote: p.lote || undefined,
-        p_observacao: p.observacao || undefined,
-      });
-      if (error) throw error;
+      const total = Math.max(1, p.paletes ?? 1);
+      for (let n = 0; n < total; n++) {
+        const { error } = await supabase.rpc("registrar_entrada", {
+          p_produto_id: p.produto_id,
+          p_area: p.area,
+          p_rua: p.rua,
+          p_quantidade: p.quantidade,
+          p_validade: p.validade,
+          p_lote: p.lote || undefined,
+          p_observacao: p.observacao || undefined,
+        });
+        if (error) {
+          throw new Error(
+            n === 0 ? error.message : `${n} palete(s) registrado(s); parou em: ${error.message}`,
+          );
+        }
+      }
+      return total;
     },
     onSuccess: invalidate,
   });
@@ -152,6 +161,30 @@ export function useRegistrarSaida() {
         p_observacao: p.observacao || undefined,
       });
       if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+}
+
+// Saída em lote: dá baixa em vários paletes (ordem FIFO já definida pelo chamador).
+export function useRegistrarSaidaLote() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async (p: { palete_ids: string[]; observacao?: string }) => {
+      let feitos = 0;
+      for (const id of p.palete_ids) {
+        const { error } = await supabase.rpc("registrar_saida", {
+          p_palete_id: id,
+          p_observacao: p.observacao || undefined,
+        });
+        if (error) {
+          throw new Error(
+            feitos === 0 ? error.message : `${feitos} saída(s) feita(s); parou em: ${error.message}`,
+          );
+        }
+        feitos++;
+      }
+      return feitos;
     },
     onSuccess: invalidate,
   });
