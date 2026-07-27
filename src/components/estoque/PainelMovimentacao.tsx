@@ -76,10 +76,11 @@ export function PainelMovimentacao({ itens }: { itens: ItemEstoque[] }) {
 function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
   const { data: produtos = [] } = useProdutos();
   const entrada = useRegistrarEntrada();
-  const [produtoId, setProdutoId] = useState("");
+  const [codigo, setCodigo] = useState("");
   const [area, setArea] = useState(AREAS[0]);
   const [rua, setRua] = useState(1);
   const [quantidade, setQuantidade] = useState("");
+  const [paletes, setPaletes] = useState("1");
   const [validade, setValidade] = useState("");
   const [lote, setLote] = useState("");
   const [observacao, setObservacao] = useState("");
@@ -88,18 +89,46 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
   const ocupados = itens.filter((i) => i.area === area && i.rua === rua).length;
   const capacidade = capacidadeRua(area, rua);
 
+  const produto = useMemo(() => {
+    const c = codigo.trim().toLowerCase();
+    if (!c) return undefined;
+    return produtos.find((p) => p.codigo.toLowerCase() === c);
+  }, [codigo, produtos]);
+
+  const sugestoes = useMemo(() => {
+    const c = codigo.trim().toLowerCase();
+    if (!c || produto) return [];
+    return produtos
+      .filter((p) => p.codigo.toLowerCase().includes(c) || p.nome.toLowerCase().includes(c))
+      .slice(0, 6);
+  }, [codigo, produtos, produto]);
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!produtoId) return toast.error("Selecione um produto");
+    if (!produto) return toast.error("Informe um código de produto válido");
     const qtd = Number(quantidade);
-    if (!qtd || qtd <= 0) return toast.error("Informe a quantidade de caixas");
+    if (!qtd || qtd <= 0) return toast.error("Informe a quantidade de caixas por palete");
+    const nPaletes = Number(paletes);
+    if (!nPaletes || nPaletes <= 0) return toast.error("Informe a quantidade de paletes");
+    if (nPaletes > capacidade - ocupados)
+      return toast.error(`Rua ${area}-${rua} tem apenas ${capacidade - ocupados} posição(ões) livre(s)`);
     if (!validade) return toast.error("Informe a validade");
     entrada.mutate(
-      { produto_id: produtoId, area, rua, quantidade: qtd, validade, lote, observacao },
       {
-        onSuccess: () => {
-          toast.success(`Entrada registrada em ${area}-${rua} · posição ${ocupados + 1}`);
+        produto_id: produto.id,
+        area,
+        rua,
+        quantidade: qtd,
+        validade,
+        lote,
+        observacao,
+        paletes: nPaletes,
+      },
+      {
+        onSuccess: (total) => {
+          toast.success(`${total} palete(s) registrado(s) em ${area}-${rua}`);
           setQuantidade("");
+          setPaletes("1");
           setLote("");
           setObservacao("");
         },
@@ -111,17 +140,31 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
   return (
     <form onSubmit={submit} className="space-y-3">
       <div>
-        <label className={labelCls}>Produto</label>
-        <select value={produtoId} onChange={(e) => setProdutoId(e.target.value)} className={inputCls}>
-          <option value="">
-            {produtos.length ? "Selecione…" : "Nenhum produto cadastrado"}
-          </option>
-          {produtos.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.codigo} — {p.nome}
-            </option>
-          ))}
-        </select>
+        <label className={labelCls}>Código do produto</label>
+        <input
+          value={codigo}
+          onChange={(e) => setCodigo(e.target.value)}
+          className={inputCls}
+          placeholder="Digite o código (ex.: 101000007)"
+          autoComplete="off"
+        />
+        {produto ? (
+          <p className="mt-1 text-xs text-ok">{produto.nome}</p>
+        ) : codigo.trim() ? (
+          <div className="mt-1 space-y-1">
+            <p className="text-xs text-warn">Produto não encontrado</p>
+            {sugestoes.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setCodigo(s.codigo)}
+                className="block w-full truncate rounded-sm border border-border px-2 py-1 text-left text-[11px] hover:bg-accent"
+              >
+                {s.codigo} — {s.nome}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -159,9 +202,20 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
         {capacidade - ocupados} livre(s)
       </p>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div>
-          <label className={labelCls}>Caixas no palete</label>
+          <label className={labelCls}>Qtd. de paletes</label>
+          <input
+            type="number"
+            min={1}
+            value={paletes}
+            onChange={(e) => setPaletes(e.target.value)}
+            className={inputCls}
+            placeholder="1"
+          />
+        </div>
+        <div>
+          <label className={labelCls}>Caixas por palete</label>
           <input
             type="number"
             min={1}
