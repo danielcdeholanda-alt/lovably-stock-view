@@ -6,6 +6,7 @@ import {
   type ItemEstoque,
   type StatusValidade,
 } from "@/data/estoque";
+import { saborDoCodigo, tipoDoCodigo } from "@/lib/codigo-produto";
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 
@@ -19,12 +20,32 @@ const TONE: Record<StatusValidade, string> = {
 export function TabelaEstoque({ itens }: { itens: ItemEstoque[] }) {
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState<"todos" | StatusValidade>("todos");
+  const [tipo, setTipo] = useState("todos");
+  const [sabor, setSabor] = useState("todos");
+
+  const tipos = useMemo(
+    () => [...new Set(itens.map((i) => tipoDoCodigo(i.codigo)))].sort(),
+    [itens],
+  );
+  const sabores = useMemo(
+    () =>
+      [
+        ...new Set(
+          itens
+            .filter((i) => tipo === "todos" || tipoDoCodigo(i.codigo) === tipo)
+            .map((i) => saborDoCodigo(i.codigo)),
+        ),
+      ].sort(),
+    [itens, tipo],
+  );
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return itens.filter((i) => {
       const s = statusValidade(i.validade);
       if (filtro !== "todos" && s !== filtro) return false;
+      if (tipo !== "todos" && tipoDoCodigo(i.codigo) !== tipo) return false;
+      if (sabor !== "todos" && saborDoCodigo(i.codigo) !== sabor) return false;
       if (!q) return true;
       return (
         i.codigo.toLowerCase().includes(q) ||
@@ -33,7 +54,7 @@ export function TabelaEstoque({ itens }: { itens: ItemEstoque[] }) {
         `${i.area}-${i.rua}`.toLowerCase().includes(q)
       );
     });
-  }, [itens, busca, filtro]);
+  }, [itens, busca, filtro, tipo, sabor]);
 
   const visiveis = filtrados.slice(0, 300);
 
@@ -63,6 +84,33 @@ export function TabelaEstoque({ itens }: { itens: ItemEstoque[] }) {
               {f === "todos" ? "Todos" : STATUS_LABEL[f]}
             </button>
           ))}
+          <select
+            value={tipo}
+            onChange={(e) => {
+              setTipo(e.target.value);
+              setSabor("todos");
+            }}
+            className="rounded-sm border border-input bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="todos">Todos os tipos</option>
+            {tipos.map((t) => (
+              <option key={t} value={t}>
+                Tipo {t}
+              </option>
+            ))}
+          </select>
+          <select
+            value={sabor}
+            onChange={(e) => setSabor(e.target.value)}
+            className="rounded-sm border border-input bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="todos">Todos os sabores</option>
+            {sabores.map((s) => (
+              <option key={s} value={s}>
+                Sabor {s}
+              </option>
+            ))}
+          </select>
           <label className="relative">
             <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -81,6 +129,8 @@ export function TabelaEstoque({ itens }: { itens: ItemEstoque[] }) {
             <tr>
               {[
                 "Código",
+                "Tipo",
+                "Sabor",
                 "Produto",
                 "Validade",
                 "Dias",
@@ -106,6 +156,8 @@ export function TabelaEstoque({ itens }: { itens: ItemEstoque[] }) {
                   className="border-t border-border/60 hover:bg-accent/40"
                 >
                   <td className="px-3 py-2 font-mono text-xs">{i.codigo}</td>
+                  <td className="px-3 py-2 font-mono text-xs">{tipoDoCodigo(i.codigo)}</td>
+                  <td className="px-3 py-2 font-mono text-xs">{saborDoCodigo(i.codigo)}</td>
                   <td className="px-3 py-2">{i.produto}</td>
                   <td className="px-3 py-2 font-mono text-xs">
                     {new Date(i.validade + "T00:00:00Z").toLocaleDateString("pt-BR")}
@@ -125,7 +177,7 @@ export function TabelaEstoque({ itens }: { itens: ItemEstoque[] }) {
             })}
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                <td colSpan={11} className="px-3 py-8 text-center text-sm text-muted-foreground">
                   Nenhuma posição encontrada.
                 </td>
               </tr>

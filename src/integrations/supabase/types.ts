@@ -126,6 +126,8 @@ export type Database = {
           descricao: string | null
           id: string
           nome: string
+          sabor_codigo: string | null
+          tipo_codigo: string | null
           unidade: string
           updated_at: string
         }
@@ -136,6 +138,8 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome: string
+          sabor_codigo?: string | null
+          tipo_codigo?: string | null
           unidade?: string
           updated_at?: string
         }
@@ -146,6 +150,8 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome?: string
+          sabor_codigo?: string | null
+          tipo_codigo?: string | null
           unidade?: string
           updated_at?: string
         }

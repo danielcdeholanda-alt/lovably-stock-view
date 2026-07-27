@@ -17,6 +17,13 @@ import {
   useRegistrarSaida,
   useRegistrarSaidaLote,
 } from "@/lib/estoque-queries";
+import {
+  MSG_CODIGO_INVALIDO,
+  codigoValido,
+  normalizarCodigo,
+  saborDoCodigo,
+  tipoDoCodigo,
+} from "@/lib/codigo-produto";
 import { cn } from "@/lib/utils";
 
 const inputCls =
@@ -91,9 +98,9 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
   const capacidade = capacidadeRua(area, rua);
 
   const produto = useMemo(() => {
-    const c = codigo.trim().toLowerCase();
+    const c = normalizarCodigo(codigo);
     if (!c) return undefined;
-    return produtos.find((p) => p.codigo.toLowerCase() === c);
+    return produtos.find((p) => normalizarCodigo(p.codigo) === c);
   }, [codigo, produtos]);
 
   const sugestoes = useMemo(() => {
@@ -146,11 +153,16 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
           value={codigo}
           onChange={(e) => setCodigo(e.target.value)}
           className={inputCls}
-          placeholder="Digite o código (ex.: 101000007)"
+          placeholder="Digite o código (ex.: 0401000089)"
           autoComplete="off"
         />
         {produto ? (
-          <p className="mt-1 text-xs text-ok">{produto.nome}</p>
+          <p className="mt-1 text-xs text-ok">
+            {produto.nome}{" "}
+            <span className="font-mono text-muted-foreground">
+              · tipo {tipoDoCodigo(produto.codigo)} · sabor {saborDoCodigo(produto.codigo)}
+            </span>
+          </p>
         ) : codigo.trim() ? (
           <div className="mt-1 space-y-1">
             <p className="text-xs text-warn">Produto não encontrado</p>
@@ -409,8 +421,9 @@ function FormProduto() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!codigo.trim() || !nome.trim()) return toast.error("Informe código e nome do produto");
+    if (!codigoValido(codigo)) return toast.error(MSG_CODIGO_INVALIDO);
     criar.mutate(
-      { codigo, nome, descricao, unidade },
+      { codigo: normalizarCodigo(codigo), nome, descricao, unidade },
       {
         onSuccess: () => {
           toast.success("Produto cadastrado");
@@ -427,13 +440,24 @@ function FormProduto() {
     <form onSubmit={submit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelCls}>Código</label>
+          <label className={labelCls}>Código (tipo + 000 + sabor)</label>
           <input
             value={codigo}
             onChange={(e) => setCodigo(e.target.value)}
             className={inputCls}
-            placeholder="P-1001"
+            placeholder="0401000089"
+            inputMode="numeric"
           />
+          {codigo.trim() ? (
+            codigoValido(codigo) ? (
+              <p className="mt-1 font-mono text-[11px] text-ok">
+                {normalizarCodigo(codigo)} · tipo {tipoDoCodigo(codigo)} · sabor{" "}
+                {saborDoCodigo(codigo)}
+              </p>
+            ) : (
+              <p className="mt-1 text-[11px] text-warn">{MSG_CODIGO_INVALIDO}</p>
+            )
+          ) : null}
         </div>
         <div>
           <label className={labelCls}>Unidade</label>
