@@ -261,21 +261,41 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
 
 function FormSaida({ itens }: { itens: ItemEstoque[] }) {
   const saida = useRegistrarSaida();
+  const saidaLote = useRegistrarSaidaLote();
   const [busca, setBusca] = useState("");
   const [observacao, setObservacao] = useState("");
+  const [qtdPaletes, setQtdPaletes] = useState("1");
 
-  const fifo = useMemo(() => {
+  const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
-    return itens
-      .filter(
-        (i) =>
-          !q ||
-          i.codigo.toLowerCase().includes(q) ||
-          i.produto.toLowerCase().includes(q) ||
-          `${i.area}-${i.rua}`.toLowerCase().includes(q),
-      )
-      .slice(0, 40);
+    return itens.filter(
+      (i) =>
+        !q ||
+        i.codigo.toLowerCase().includes(q) ||
+        i.produto.toLowerCase().includes(q) ||
+        `${i.area}-${i.rua}`.toLowerCase().includes(q),
+    );
   }, [itens, busca]);
+
+  const fifo = filtrados.slice(0, 40);
+
+  const darSaidaEmLote = () => {
+    const n = Number(qtdPaletes);
+    if (!n || n <= 0) return toast.error("Informe a quantidade de paletes");
+    if (!busca.trim()) return toast.error("Filtre por código, produto ou área-rua antes");
+    if (n > filtrados.length)
+      return toast.error(`Só há ${filtrados.length} palete(s) no filtro atual`);
+    saidaLote.mutate(
+      { palete_ids: filtrados.slice(0, n).map((i) => i.id), observacao },
+      {
+        onSuccess: (feitos) => {
+          toast.success(`${feitos} palete(s) com saída registrada — ruas reagrupadas`);
+          setObservacao("");
+        },
+        onError: (err: Error) => toast.error(err.message),
+      },
+    );
+  };
 
   return (
     <div className="space-y-3">
@@ -296,6 +316,37 @@ function FormSaida({ itens }: { itens: ItemEstoque[] }) {
           className={inputCls}
         />
       </div>
+
+      <div className="rounded-sm border border-border p-3">
+        <p className="mb-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+          Saída por quantidade de paletes (FIFO no filtro acima)
+        </p>
+        <div className="flex items-end gap-2">
+          <div className="w-32">
+            <label className={labelCls}>Qtd. de paletes</label>
+            <input
+              type="number"
+              min={1}
+              value={qtdPaletes}
+              onChange={(e) => setQtdPaletes(e.target.value)}
+              className={inputCls}
+            />
+          </div>
+          <button
+            type="button"
+            className={btnCls}
+            disabled={saidaLote.isPending}
+            onClick={darSaidaEmLote}
+          >
+            <ArrowUpFromLine className="size-4" />
+            {saidaLote.isPending ? "Registrando…" : "Dar saída"}
+          </button>
+        </div>
+        <p className="mt-2 font-mono text-[11px] text-muted-foreground">
+          {filtrados.length} palete(s) no filtro atual
+        </p>
+      </div>
+
       <div className="max-h-64 overflow-auto rounded-sm border border-border">
         {fifo.length === 0 ? (
           <p className="px-3 py-6 text-center text-xs text-muted-foreground">
