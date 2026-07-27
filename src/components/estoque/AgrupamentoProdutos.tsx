@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Layers } from "lucide-react";
 import { statusValidade, type ItemEstoque } from "@/data/estoque";
 import { saborDoCodigo, tipoDoCodigo } from "@/lib/codigo-produto";
@@ -80,9 +80,8 @@ export function AgrupamentoProdutos({ itens }: { itens: ItemEstoque[] }) {
             </thead>
             <tbody>
               {porTipo.map((t) => (
-                <>
+                <Fragment key={t.chave}>
                   <tr
-                    key={t.chave}
                     onClick={() => setAberto(aberto === t.chave ? null : t.chave)}
                     className={cn(
                       "cursor-pointer border-t border-border/60 hover:bg-accent/40",
@@ -122,7 +121,7 @@ export function AgrupamentoProdutos({ itens }: { itens: ItemEstoque[] }) {
                         <td className="px-3 py-1.5 font-mono text-[11px]">{s.criticos}</td>
                       </tr>
                     ))}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>
