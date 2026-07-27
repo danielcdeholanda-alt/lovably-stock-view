@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 import { Kpis } from "@/components/estoque/Kpis";
 import { MapaEstoque } from "@/components/estoque/MapaEstoque";
 import { Graficos } from "@/components/estoque/Graficos";
+import { AgrupamentoProdutos } from "@/components/estoque/AgrupamentoProdutos";
 import { TabelaEstoque } from "@/components/estoque/TabelaEstoque";
 import { PainelMovimentacao } from "@/components/estoque/PainelMovimentacao";
 import { useEstoque } from "@/lib/estoque-queries";
@@ -68,6 +69,7 @@ function Index() {
         <PainelMovimentacao itens={itens} />
         <MapaEstoque itens={itens} />
         <Graficos itens={itens} />
+        <AgrupamentoProdutos itens={itens} />
         <TabelaEstoque itens={itens} />
         {isLoading && <p className="text-xs text-muted-foreground">Carregando estoque…</p>}
       </div>
