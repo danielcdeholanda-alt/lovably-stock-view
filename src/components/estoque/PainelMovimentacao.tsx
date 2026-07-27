@@ -15,6 +15,7 @@ import {
   useProdutos,
   useRegistrarEntrada,
   useRegistrarSaida,
+  useRegistrarSaidaLote,
 } from "@/lib/estoque-queries";
 import { cn } from "@/lib/utils";
 
