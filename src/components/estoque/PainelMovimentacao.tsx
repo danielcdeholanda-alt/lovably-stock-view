@@ -80,7 +80,10 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
   const { data: produtos = [] } = useProdutos();
   const entrada = useRegistrarEntrada();
   const [codigo, setCodigo] = useState("");
-  const [area, setArea] = useState(AREAS[0]);
+  const estrutura = useEstrutura();
+  const AREAS = estrutura.areas;
+  const [areaSel, setArea] = useState("");
+  const area = areaSel || AREAS[0] || "";
   const [rua, setRua] = useState(1);
   const [quantidade, setQuantidade] = useState("");
   const [paletes, setPaletes] = useState("1");
@@ -88,9 +91,10 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
   const [lote, setLote] = useState("");
   const [observacao, setObservacao] = useState("");
 
-  const ruas = ruasDaArea(area);
+  const ruas = estrutura.ruasDaArea(area);
   const ocupados = itens.filter((i) => i.area === area && i.rua === rua).length;
-  const capacidade = capacidadeRua(area, rua);
+  const capacidade = estrutura.capacidadeRua(area, rua);
+
 
   const produto = useMemo(() => {
     const c = normalizarCodigo(codigo);
