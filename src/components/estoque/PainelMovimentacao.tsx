@@ -123,6 +123,8 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
     entrada.mutate(
       {
         produto_id: produto.id,
+        galpao_id: estrutura.galpaoId,
+
         area,
         rua,
         quantidade: qtd,
