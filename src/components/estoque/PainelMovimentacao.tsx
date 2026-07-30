@@ -1,14 +1,9 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ArrowDownToLine, ArrowUpFromLine, PackagePlus } from "lucide-react";
-import {
-  AREAS,
-  capacidadeRua,
-  ruasDaArea,
-  statusValidade,
-  STATUS_LABEL,
-  type ItemEstoque,
-} from "@/data/estoque";
+import { statusValidade, STATUS_LABEL, type ItemEstoque } from "@/data/estoque";
+import { useEstrutura } from "@/lib/estrutura-queries";
+
 import {
   useCriarProduto,
   useMovimentacoes,
