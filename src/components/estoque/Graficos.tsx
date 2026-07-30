@@ -9,7 +9,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { STATUS_LABEL, resumoAreas, statusValidade, type ItemEstoque } from "@/data/estoque";
+import { STATUS_LABEL, statusValidade, type ItemEstoque } from "@/data/estoque";
+import { useEstrutura } from "@/lib/estrutura-queries";
+
 
 const STATUS_COLORS: Record<string, string> = {
   vencido: "var(--dead)",
