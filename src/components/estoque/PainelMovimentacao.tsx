@@ -202,7 +202,7 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
           <select value={rua} onChange={(e) => setRua(Number(e.target.value))} className={inputCls}>
             {ruas.map((r) => (
               <option key={r.rua} value={r.rua}>
-                {area}-{String(r.rua).padStart(2, "0")} ({r.paletes} paletes)
+                {area}-{String(r.rua).padStart(2, "0")} ({r.capacidade * r.niveis} paletes)
               </option>
             ))}
           </select>
