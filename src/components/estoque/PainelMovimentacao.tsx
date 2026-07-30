@@ -1,14 +1,9 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ArrowDownToLine, ArrowUpFromLine, PackagePlus } from "lucide-react";
-import {
-  AREAS,
-  capacidadeRua,
-  ruasDaArea,
-  statusValidade,
-  STATUS_LABEL,
-  type ItemEstoque,
-} from "@/data/estoque";
+import { statusValidade, STATUS_LABEL, type ItemEstoque } from "@/data/estoque";
+import { useEstrutura } from "@/lib/estrutura-queries";
+
 import {
   useCriarProduto,
   useMovimentacoes,
@@ -85,7 +80,10 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
   const { data: produtos = [] } = useProdutos();
   const entrada = useRegistrarEntrada();
   const [codigo, setCodigo] = useState("");
-  const [area, setArea] = useState(AREAS[0]);
+  const estrutura = useEstrutura();
+  const AREAS = estrutura.areas;
+  const [areaSel, setArea] = useState("");
+  const area = areaSel || AREAS[0] || "";
   const [rua, setRua] = useState(1);
   const [quantidade, setQuantidade] = useState("");
   const [paletes, setPaletes] = useState("1");
@@ -93,9 +91,10 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
   const [lote, setLote] = useState("");
   const [observacao, setObservacao] = useState("");
 
-  const ruas = ruasDaArea(area);
+  const ruas = estrutura.ruasDaArea(area);
   const ocupados = itens.filter((i) => i.area === area && i.rua === rua).length;
-  const capacidade = capacidadeRua(area, rua);
+  const capacidade = estrutura.capacidadeRua(area, rua);
+
 
   const produto = useMemo(() => {
     const c = normalizarCodigo(codigo);
@@ -124,6 +123,8 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
     entrada.mutate(
       {
         produto_id: produto.id,
+        galpao_id: estrutura.galpaoId,
+
         area,
         rua,
         quantidade: qtd,
@@ -203,7 +204,7 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
           <select value={rua} onChange={(e) => setRua(Number(e.target.value))} className={inputCls}>
             {ruas.map((r) => (
               <option key={r.rua} value={r.rua}>
-                {area}-{String(r.rua).padStart(2, "0")} ({r.paletes} paletes)
+                {area}-{String(r.rua).padStart(2, "0")} ({r.capacidade * r.niveis} paletes)
               </option>
             ))}
           </select>

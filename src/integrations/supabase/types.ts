@@ -14,11 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      areas: {
+        Row: {
+          created_at: string
+          galpao_id: string
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          created_at?: string
+          galpao_id: string
+          id?: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          created_at?: string
+          galpao_id?: string
+          id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "areas_galpao_id_fkey"
+            columns: ["galpao_id"]
+            isOneToOne: false
+            referencedRelation: "galpoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      galpoes: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          id: string
+          nome: string
+          padrao: boolean
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          nome: string
+          padrao?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          padrao?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       movimentacoes: {
         Row: {
           area: string
           created_at: string
           data: string
+          galpao_id: string
           id: string
           lote: string | null
           observacao: string | null
@@ -33,6 +96,7 @@ export type Database = {
           area: string
           created_at?: string
           data?: string
+          galpao_id: string
           id?: string
           lote?: string | null
           observacao?: string | null
@@ -47,6 +111,7 @@ export type Database = {
           area?: string
           created_at?: string
           data?: string
+          galpao_id?: string
           id?: string
           lote?: string | null
           observacao?: string | null
@@ -58,6 +123,13 @@ export type Database = {
           validade?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "movimentacoes_galpao_id_fkey"
+            columns: ["galpao_id"]
+            isOneToOne: false
+            referencedRelation: "galpoes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "movimentacoes_produto_id_fkey"
             columns: ["produto_id"]
@@ -71,6 +143,7 @@ export type Database = {
         Row: {
           area: string
           created_at: string
+          galpao_id: string
           id: string
           lote: string | null
           posicao: number
@@ -82,6 +155,7 @@ export type Database = {
         Insert: {
           area: string
           created_at?: string
+          galpao_id: string
           id?: string
           lote?: string | null
           posicao: number
@@ -93,6 +167,7 @@ export type Database = {
         Update: {
           area?: string
           created_at?: string
+          galpao_id?: string
           id?: string
           lote?: string | null
           posicao?: number
@@ -103,11 +178,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "paletes_area_rua_fkey"
-            columns: ["area", "rua"]
+            foreignKeyName: "paletes_galpao_id_fkey"
+            columns: ["galpao_id"]
             isOneToOne: false
-            referencedRelation: "ruas"
-            referencedColumns: ["area", "rua"]
+            referencedRelation: "galpoes"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "paletes_produto_id_fkey"
@@ -157,21 +232,83 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          nome: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          nome?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ruas: {
         Row: {
           area: string
+          area_id: string
           capacidade: number
+          id: string
+          niveis: number
           rua: number
         }
         Insert: {
           area: string
+          area_id: string
           capacidade: number
+          id?: string
+          niveis?: number
           rua: number
         }
         Update: {
           area?: string
+          area_id?: string
           capacidade?: number
+          id?: string
+          niveis?: number
           rua?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ruas_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -180,9 +317,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      criar_ruas_em_bloco: {
+        Args: {
+          p_area_id: string
+          p_capacidade: number
+          p_niveis?: number
+          p_quantidade: number
+        }
+        Returns: number
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       registrar_entrada: {
         Args: {
           p_area: string
+          p_galpao_id?: string
           p_lote?: string
           p_observacao?: string
           p_produto_id: string
@@ -193,6 +347,7 @@ export type Database = {
         Returns: {
           area: string
           created_at: string
+          galpao_id: string
           id: string
           lote: string | null
           posicao: number
@@ -214,7 +369,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "operador"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -341,6 +496,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "operador"],
+    },
   },
 } as const

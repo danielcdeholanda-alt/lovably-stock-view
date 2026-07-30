@@ -1,11 +1,13 @@
-import { CAPACIDADE_TOTAL, RUAS, statusValidade, type ItemEstoque } from "@/data/estoque";
+import { statusValidade, type ItemEstoque } from "@/data/estoque";
+import { useEstrutura } from "@/lib/estrutura-queries";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, Boxes, PackageCheck, Warehouse } from "lucide-react";
 
 export function Kpis({ itens }: { itens: ItemEstoque[] }) {
+  const { ruas, capacidadeTotal } = useEstrutura();
   const paletes = itens.length;
   const caixas = itens.reduce((s, i) => s + i.quantidade, 0);
-  const ocupacao = Math.round((paletes / CAPACIDADE_TOTAL) * 100);
+  const ocupacao = capacidadeTotal ? Math.round((paletes / capacidadeTotal) * 100) : 0;
   const criticos = itens.filter((i) => statusValidade(i.validade) === "critico").length;
   const vencidos = itens.filter((i) => statusValidade(i.validade) === "vencido").length;
   const skus = new Set(itens.map((i) => i.codigo)).size;
@@ -14,14 +16,15 @@ export function Kpis({ itens }: { itens: ItemEstoque[] }) {
     {
       label: "Paletes em estoque",
       value: paletes.toLocaleString("pt-BR"),
-      hint: `${caixas.toLocaleString("pt-BR")} caixas · ${RUAS.length} ruas`,
+      hint: `${caixas.toLocaleString("pt-BR")} caixas · ${ruas.length} ruas`,
       icon: Boxes,
       tone: "text-primary",
     },
     {
       label: "Ocupação do armazém",
       value: `${ocupacao}%`,
-      hint: `${CAPACIDADE_TOTAL.toLocaleString("pt-BR")} posições de palete`,
+      hint: `${capacidadeTotal.toLocaleString("pt-BR")} posições de palete`,
+
       icon: Warehouse,
       tone: "text-chart-3",
     },

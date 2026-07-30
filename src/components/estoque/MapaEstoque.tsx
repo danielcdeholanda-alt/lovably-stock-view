@@ -1,13 +1,6 @@
 import { useMemo, useState } from "react";
-import {
-  AREAS,
-  buildMapaArea,
-  capacidadeArea,
-  ruasDaArea,
-  statusValidade,
-  type CelulaPalete,
-  type ItemEstoque,
-} from "@/data/estoque";
+import { statusValidade, type CelulaPalete, type ItemEstoque } from "@/data/estoque";
+import { useEstrutura } from "@/lib/estrutura-queries";
 import { cn } from "@/lib/utils";
 
 function corPalete(c: CelulaPalete) {
@@ -20,12 +13,20 @@ function corPalete(c: CelulaPalete) {
 }
 
 export function MapaEstoque({ itens }: { itens: ItemEstoque[] }) {
-  const [area, setArea] = useState(AREAS[0]);
+  const estrutura = useEstrutura();
+  const AREAS = estrutura.areas;
+  const [areaSel, setArea] = useState<string>("");
+  const area = areaSel || AREAS[0] || "";
   const [sel, setSel] = useState<CelulaPalete | null>(null);
-  const mapa = useMemo(() => buildMapaArea(itens, area), [itens, area]);
-  const ruas = ruasDaArea(area);
-  const capacidade = capacidadeArea(area);
+  const mapa = useMemo(
+    () => (area ? estrutura.buildMapaArea(itens, area) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [itens, area, estrutura.ruas],
+  );
+  const ruas = estrutura.ruasDaArea(area);
+  const capacidade = estrutura.capacidadeArea(area);
   const ocupados = itens.filter((i) => i.area === area).length;
+
 
   return (
     <section className="rounded-md border border-border bg-card">

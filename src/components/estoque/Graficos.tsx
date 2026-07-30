@@ -9,7 +9,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { STATUS_LABEL, resumoAreas, statusValidade, type ItemEstoque } from "@/data/estoque";
+import { STATUS_LABEL, statusValidade, type ItemEstoque } from "@/data/estoque";
+import { useEstrutura } from "@/lib/estrutura-queries";
+
 
 const STATUS_COLORS: Record<string, string> = {
   vencido: "var(--dead)",
@@ -19,13 +21,15 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function Graficos({ itens }: { itens: ItemEstoque[] }) {
+  const estrutura = useEstrutura();
   const porStatus = (["vencido", "critico", "atencao", "ok"] as const).map((s) => ({
     name: STATUS_LABEL[s],
     key: s,
     value: itens.filter((i) => statusValidade(i.validade) === s).length,
   }));
 
-  const porArea = resumoAreas(itens).map((a) => ({
+  const porArea = estrutura.resumoAreas(itens).map((a) => ({
+
     area: `Área ${a.area}`,
     ocupados: a.ocupados,
     livres: a.capacidade - a.ocupados,

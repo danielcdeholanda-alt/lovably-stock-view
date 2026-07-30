@@ -39,13 +39,17 @@ export function useProdutos() {
   });
 }
 
-export function useEstoque() {
+export function useEstoque(galpaoId?: string) {
   return useQuery({
-    queryKey: ["paletes"],
+    queryKey: ["paletes", galpaoId],
+    enabled: !!galpaoId,
     queryFn: async (): Promise<ItemEstoque[]> => {
       const { data, error } = await supabase
         .from("paletes")
-        .select("id, area, rua, posicao, quantidade, validade, lote, produtos(codigo, nome, descricao)")
+        .select(
+          "id, area, rua, posicao, quantidade, validade, lote, produtos(codigo, nome, descricao)",
+        )
+        .eq("galpao_id", galpaoId!)
         .order("validade");
       if (error) throw error;
       type Row = {
@@ -74,17 +78,19 @@ export function useEstoque() {
   });
 }
 
-export function useMovimentacoes(limite = 30) {
+export function useMovimentacoes(limite = 30, galpaoId?: string) {
   return useQuery({
-    queryKey: ["movimentacoes", limite],
+    queryKey: ["movimentacoes", limite, galpaoId],
     queryFn: async (): Promise<Movimentacao[]> => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("movimentacoes")
         .select(
           "id, tipo, area, rua, posicao, quantidade, validade, lote, observacao, data, produtos(codigo, nome)",
         )
         .order("data", { ascending: false })
         .limit(limite);
+      if (galpaoId) q = q.eq("galpao_id", galpaoId);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as Movimentacao[];
     },
@@ -121,6 +127,7 @@ export function useRegistrarEntrada() {
   return useMutation({
     mutationFn: async (p: {
       produto_id: string;
+      galpao_id?: string;
       area: string;
       rua: number;
       quantidade: number;
@@ -133,6 +140,7 @@ export function useRegistrarEntrada() {
       for (let n = 0; n < total; n++) {
         const { error } = await supabase.rpc("registrar_entrada", {
           p_produto_id: p.produto_id,
+          p_galpao_id: p.galpao_id,
           p_area: p.area,
           p_rua: p.rua,
           p_quantidade: p.quantidade,
