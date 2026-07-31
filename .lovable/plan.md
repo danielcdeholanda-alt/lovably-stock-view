@@ -1,47 +1,29 @@
-## Objetivo
+## Sobre ver a senha
 
-1. Colocar o sistema atrás de login (cadastro fechado, com admin e operador).
-2. Tornar a estrutura do armazém editável e multi-galpão, mantendo o galpão atual (áreas A–F, 344 ruas) como galpão principal com todo o estoque preservado.
+Não é possível mostrar a senha de um usuário: o sistema nunca guarda a senha em texto — só um hash irreversível. Guardar senhas legíveis seria uma falha grave de segurança (qualquer vazamento entregaria todas as contas) e nem o administrador consegue lê-las.
 
-## 1. Login e permissões
+A solução prática para o mesmo problema (operador esqueceu a senha) é o administrador **redefinir** a senha na hora.
 
-- Tela `/auth` com e-mail e senha. Sem auto-cadastro: o auto-registro fica desativado; contas são criadas por um admin dentro do app (tela "Usuários").
-- Todo o painel passa a viver em rota protegida; quem não estiver logado é enviado para `/auth`.
-- Cabeçalho ganha o nome do usuário, o papel e o botão "Sair".
-- Papéis em tabela própria (`user_roles`), nunca no perfil:
-  - **admin**: tudo — cadastrar produtos, editar estrutura de galpões, criar usuários e definir papéis, registrar movimentações.
-  - **operador**: registrar entradas e saídas e consultar o painel; sem acesso a estrutura, cadastro de produtos e usuários.
-- As regras de acesso ao banco deixam de ser abertas: leitura e escrita só para usuários autenticados, e as operações administrativas só para admin.
-- O primeiro admin: o e-mail que você indicar vira admin na migração (me diga o e-mail; se preferir, crio uma tela de "primeiro acesso" que promove o primeiro usuário cadastrado a admin).
+## O que vou implementar
 
-## 2. Estrutura modular de galpões
+### 1. Redefinir senha pelo administrador (tela Usuários)
 
-Novo cadastro em três níveis, no banco:
+- Em cada linha da lista de usuários, botão **"Redefinir senha"**.
+- Abre um campo com a nova senha provisória: o admin digita a que quiser ou clica em **"Gerar"** para criar uma senha aleatória forte.
+- Ao confirmar, a senha é trocada imediatamente e mostrada na tela uma única vez, com botão **"Copiar"**, para o admin repassar ao operador.
+- A senha só aparece nesse momento; ao fechar/recarregar, não é mais recuperável (só é possível gerar outra).
 
-```text
-galpao (nome, código, ativo, padrão)
-  └── area (letra/nome, ordem)
-        └── rua (número, capacidade de paletes, níveis)
-```
+### 2. Troca obrigatória no primeiro acesso (opcional, incluído)
 
-- A estrutura atual A–F vira o galpão **"Galpão Principal"**, marcado como padrão; paletes e movimentações existentes são vinculados a ele sem perda de dados.
-- **Modo simples**: com um único galpão, nada muda na navegação — o seletor de galpão fica oculto e a tela de estrutura edita direto as áreas/ruas desse galpão.
-- **Modo multi-galpão**: ao cadastrar o segundo galpão, aparece um seletor no topo do painel; KPIs, mapa, gráficos, tabela e movimentações passam a ser filtrados pelo galpão selecionado.
+- Senha definida pelo admin é marcada como provisória; no próximo login o operador é levado a uma tela para escolher a própria senha antes de usar o sistema.
 
-### Tela "Estrutura" (somente admin)
+### 3. Registro de auditoria
 
-- Criar/renomear/desativar galpões.
-- Por galpão: adicionar e remover áreas.
-- Por área: adicionar ruas em bloco (ex.: "70 ruas de 63 paletes, 2 níveis") ou editar rua a rua (capacidade e níveis).
-- Proteções: não permite reduzir capacidade abaixo dos paletes já ocupados, nem excluir área/rua com estoque.
-- Resumo de capacidade total recalculado a partir do banco (o layout deixa de ser fixo no código).
-
-### Níveis
-
-- Cada rua passa a ter um campo `niveis` (padrão 1). Com `niveis = 1` o comportamento é exatamente o de hoje (paletes no chão, contíguos). Com mais de um nível, a capacidade efetiva da rua é `capacidade × níveis` e o mapa mostra as camadas empilhadas.
+- Cada redefinição fica registrada (quem redefiniu, para quem, quando), visível para o admin.
 
 ## Detalhes técnicos
 
-- Migração: tabelas `galpoes`, `areas`, `ruas` (reestruturada com `area_id`, `niveis`), colunas `galpao_id` em `paletes` e `movimentacoes`, `profiles`, `user_roles` + enum `app_role` e função `has_role` (security definer). GRANTs e RLS por tabela; políticas de escrita administrativa via `has_role`.
-- As funções `registrar_entrada` / `registrar_saida` passam a receber o galpão e a ler capacidade/níveis do banco, mantendo a regra de contiguidade e o reagrupamento na saída.
-- Front: rota protegida `_authenticated`, `/auth`, hooks de sessão/papel, `src/data/estoque.ts` deixa de conter o layout fixo e passa a derivar tudo das queries; `MapaEstoque`, `Kpis`, `Graficos`, `TabelaEstoque` e `PainelMovimentacao` recebem a estrutura vinda do banco e o galpão selecionado.
+- Nova server function `redefinirSenha` em `src/lib/admin.functions.ts`, com `requireSupabaseAuth` + verificação de papel admin via `has_role`, usando `supabaseAdmin.auth.admin.updateUserById` (importado dentro do handler).
+- Marcação de senha provisória em `user_metadata.senha_provisoria`; tela `/_authenticated/trocar-senha` e verificação no layout protegido para redirecionar enquanto a marca existir; `supabase.auth.updateUser` limpa a marca.
+- Tabela `password_resets` (admin_id, user_id, criado_em) com RLS: SELECT/INSERT apenas para admin via `has_role`, mais GRANTs para `authenticated` e `service_role`. Nenhuma senha é gravada nessa tabela.
+- UI em `src/routes/_authenticated/usuarios.tsx`: botão por linha, gerador de senha aleatória no cliente e exibição única com cópia.
