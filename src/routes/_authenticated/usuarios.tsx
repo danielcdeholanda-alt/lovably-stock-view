@@ -2,9 +2,23 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { UserPlus, Trash2 } from "lucide-react";
+import { UserPlus, Trash2, KeyRound, Copy, RefreshCw } from "lucide-react";
 import { usePapel } from "@/lib/auth";
-import { criarUsuario, definirPapel, excluirUsuario, listarUsuarios } from "@/lib/admin.functions";
+import {
+  criarUsuario,
+  definirPapel,
+  excluirUsuario,
+  listarUsuarios,
+  redefinirSenha,
+} from "@/lib/admin.functions";
+
+function gerarSenha(tamanho = 12) {
+  const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  const bytes = new Uint32Array(tamanho);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => alfabeto[b % alfabeto.length]).join("");
+}
+
 
 export const Route = createFileRoute("/_authenticated/usuarios")({
   head: () => ({
