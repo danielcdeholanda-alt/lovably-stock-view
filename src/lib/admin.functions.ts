@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { traduzir } from "@/lib/admin-mensagens";
 
 const novoUsuario = z.object({
   email: z.string().email(),
@@ -40,7 +41,7 @@ export const criarPrimeiroAdmin = createServerFn({ method: "POST" })
       email_confirm: true,
       user_metadata: { nome: data.nome },
     });
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(traduzir(error.message));
     return { ok: true };
   });
 
@@ -117,7 +118,7 @@ export const criarUsuario = createServerFn({ method: "POST" })
       email_confirm: true,
       user_metadata: { nome: data.nome, role: data.role, senha_provisoria: true },
     });
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(traduzir(error.message));
     return { id: criado.user?.id };
   });
 
@@ -145,6 +146,6 @@ export const excluirUsuario = createServerFn({ method: "POST" })
     if (data.userId === context.userId) throw new Error("Você não pode excluir a si mesmo");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(traduzir(error.message));
     return { ok: true };
   });
