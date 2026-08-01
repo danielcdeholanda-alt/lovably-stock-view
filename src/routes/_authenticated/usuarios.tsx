@@ -66,11 +66,19 @@ function UsuariosPage() {
     mutationFn: (userId: string) => excluirUsuario({ data: { userId } }),
     onSuccess: invalidar,
   });
+  const resetar = useMutation({
+    mutationFn: (p: { userId: string; senha: string }) => redefinirSenha({ data: p }),
+    onSuccess: invalidar,
+  });
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [nome, setNome] = useState("");
   const [role, setRole] = useState<"admin" | "operador">("operador");
+  const [resetAlvo, setResetAlvo] = useState<string | null>(null);
+  const [novaSenha, setNovaSenha] = useState("");
+  const [senhaGerada, setSenhaGerada] = useState<{ userId: string; senha: string } | null>(null);
+
 
   if (carregando) return <p className="p-6 text-sm text-muted-foreground">Carregando…</p>;
   if (!isAdmin)
