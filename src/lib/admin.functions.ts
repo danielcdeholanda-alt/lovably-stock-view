@@ -106,7 +106,7 @@ export const criarUsuario = createServerFn({ method: "POST" })
       email: data.email,
       password: data.senha,
       email_confirm: true,
-      user_metadata: { nome: data.nome, role: data.role },
+      user_metadata: { nome: data.nome, role: data.role, senha_provisoria: true },
     });
     if (error) throw new Error(error.message);
     return { id: criado.user?.id };
