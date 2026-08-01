@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { senhaFraca, traduzir } from "@/lib/admin-mensagens";
 
 export const Route = createFileRoute("/_authenticated/trocar-senha")({
   head: () => ({
@@ -37,15 +38,20 @@ function TrocarSenhaPage() {
 
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (senha.length < 8) return toast.error("A senha deve ter ao menos 8 caracteres");
+    const fraca = senhaFraca(senha);
+    if (fraca) return toast.error(fraca);
     if (senha !== confirma) return toast.error("As senhas não conferem");
     setOcupado(true);
     const { error } = await supabase.auth.updateUser({
       password: senha,
       data: { senha_provisoria: false },
     });
+    if (error) {
+      setOcupado(false);
+      return toast.error(traduzir(error.message));
+    }
+    await supabase.auth.refreshSession();
     setOcupado(false);
-    if (error) return toast.error(error.message);
     toast.success("Senha atualizada");
     navigate({ to: "/dashboard", replace: true });
   };

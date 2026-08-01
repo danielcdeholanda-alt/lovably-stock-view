@@ -529,6 +529,9 @@ function UltimasMovimentacoes() {
                 {m.area}-{String(m.rua).padStart(2, "0")} · palete {m.posicao} · {m.quantidade} cx
                 {m.lote ? ` · lote ${m.lote}` : ""}
               </p>
+              {m.usuario && (
+                <p className="text-[10px] text-muted-foreground">Registrado por {m.usuario}</p>
+              )}
               {m.observacao && <p className="text-muted-foreground">{m.observacao}</p>}
             </li>
           ))}

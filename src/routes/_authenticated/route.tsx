@@ -96,6 +96,12 @@ function Cabecalho() {
               </Link>
             </>
           )}
+          <Link
+            to="/trocar-senha"
+            className="rounded-sm border border-border px-3 py-1.5 transition hover:bg-accent [&.active]:border-primary [&.active]:text-primary"
+          >
+            Trocar senha
+          </Link>
           <button
             type="button"
             onClick={sair}
