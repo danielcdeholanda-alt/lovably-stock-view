@@ -77,6 +77,11 @@ export const redefinirSenha = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await garantirAdmin(context.supabase as never, context.userId);
+    if (data.userId === context.userId) {
+      throw new Error(
+        "Use a opção “Trocar minha senha” para alterar a sua própria senha.",
+      );
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: alvo } = await supabaseAdmin.auth.admin.getUserById(data.userId);
@@ -86,7 +91,10 @@ export const redefinirSenha = createServerFn({ method: "POST" })
       password: data.senha,
       user_metadata: { ...(alvo.user.user_metadata ?? {}), senha_provisoria: true },
     });
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(traduzir(error.message));
+
+    // Encerra todas as sessões ativas do usuário: a senha antiga deixa de valer na hora.
+    await supabaseAdmin.auth.admin.signOut(data.userId, "global").catch(() => undefined);
 
     await supabaseAdmin
       .from("password_resets")
@@ -94,6 +102,7 @@ export const redefinirSenha = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
 
 
 export const criarUsuario = createServerFn({ method: "POST" })
