@@ -55,11 +55,46 @@ export const listarUsuarios = createServerFn({ method: "GET" })
       .order("created_at");
     if (error) throw new Error(error.message);
     const { data: papeis } = await supabaseAdmin.from("user_roles").select("user_id, role");
+    const { data: resets } = await supabaseAdmin
+      .from("password_resets")
+      .select("user_id, created_at")
+      .order("created_at", { ascending: false });
+    const { data: lista } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
     return (perfis ?? []).map((p) => ({
       ...p,
       roles: (papeis ?? []).filter((r) => r.user_id === p.id).map((r) => r.role as string),
+      ultimoReset: (resets ?? []).find((r) => r.user_id === p.id)?.created_at ?? null,
+      senhaProvisoria:
+        (lista?.users ?? []).find((u) => u.id === p.id)?.user_metadata?.senha_provisoria === true,
     }));
   });
+
+/** Admin redefine a senha de um usuário. A senha nunca é armazenada nem recuperável depois. */
+export const redefinirSenha = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ userId: z.string().uuid(), senha: z.string().min(8).max(72) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await garantirAdmin(context.supabase as never, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: alvo } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    if (!alvo.user) throw new Error("Usuário не encontrado".replace("не", "não"));
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+      password: data.senha,
+      user_metadata: { ...(alvo.user.user_metadata ?? {}), senha_provisoria: true },
+    });
+    if (error) throw new Error(error.message);
+
+    await supabaseAdmin
+      .from("password_resets")
+      .insert({ admin_id: context.userId, user_id: data.userId });
+
+    return { ok: true };
+  });
+
 
 export const criarUsuario = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
