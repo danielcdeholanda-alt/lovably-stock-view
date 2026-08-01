@@ -8,13 +8,20 @@ import { EstruturaProvider, useEstrutura } from "@/lib/estrutura-queries";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
+    if (
+      data.user.user_metadata?.senha_provisoria === true &&
+      location.pathname !== "/trocar-senha"
+    ) {
+      throw redirect({ to: "/trocar-senha" });
+    }
     return { user: data.user };
   },
   component: Layout,
 });
+
 
 function Layout() {
   return (

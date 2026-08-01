@@ -193,6 +193,27 @@ export type Database = {
           },
         ]
       }
+      password_resets: {
+        Row: {
+          admin_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       produtos: {
         Row: {
           ativo: boolean
