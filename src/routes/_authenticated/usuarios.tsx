@@ -164,8 +164,15 @@ function UsuariosPage() {
             </thead>
             <tbody className="divide-y divide-border/60">
               {(usuarios.data ?? []).map((u) => (
-                <tr key={u.id}>
-                  <td className="px-3 py-2">{u.nome}</td>
+                <tr key={u.id} className="align-top">
+                  <td className="px-3 py-2">
+                    {u.nome}
+                    {u.senhaProvisoria && (
+                      <span className="ml-1 rounded-sm bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">
+                        senha provisória
+                      </span>
+                    )}
+                  </td>
                   <td className="px-3 py-2 font-mono">{u.email}</td>
                   <td className="px-3 py-2">
                     <select
@@ -182,19 +189,109 @@ function UsuariosPage() {
                       <option value="admin">Administrador</option>
                     </select>
                   </td>
-                  <td className="px-3 py-2 text-right">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        remover.mutate(u.id, { onError: (er: Error) => toast.error(er.message) })
-                      }
-                      className="inline-flex items-center gap-1 rounded-sm border border-border px-2 py-1 text-[11px] hover:bg-accent"
-                    >
-                      <Trash2 className="size-3" /> Excluir
-                    </button>
+                  <td className="px-3 py-2">
+                    <div className="flex flex-wrap justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSenhaGerada(null);
+                          setNovaSenha(gerarSenha());
+                          setResetAlvo(resetAlvo === u.id ? null : u.id);
+                        }}
+                        className="inline-flex items-center gap-1 rounded-sm border border-border px-2 py-1 text-[11px] hover:bg-accent"
+                      >
+                        <KeyRound className="size-3" /> Redefinir senha
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          remover.mutate(u.id, { onError: (er: Error) => toast.error(er.message) })
+                        }
+                        className="inline-flex items-center gap-1 rounded-sm border border-border px-2 py-1 text-[11px] hover:bg-accent"
+                      >
+                        <Trash2 className="size-3" /> Excluir
+                      </button>
+                    </div>
+
+                    {resetAlvo === u.id && (
+                      <div className="mt-2 space-y-2 rounded-sm border border-border bg-background p-2 text-left">
+                        <div className="flex gap-1">
+                          <input
+                            value={novaSenha}
+                            onChange={(e) => setNovaSenha(e.target.value)}
+                            className="w-full rounded-sm border border-input bg-background px-2 py-1 font-mono text-[11px]"
+                            aria-label="Nova senha provisória"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setNovaSenha(gerarSenha())}
+                            className="inline-flex items-center gap-1 rounded-sm border border-border px-2 py-1 text-[11px] hover:bg-accent"
+                          >
+                            <RefreshCw className="size-3" /> Gerar
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={resetar.isPending}
+                          onClick={() => {
+                            if (novaSenha.length < 8)
+                              return toast.error("A senha deve ter ao menos 8 caracteres");
+                            resetar.mutate(
+                              { userId: u.id, senha: novaSenha },
+                              {
+                                onSuccess: () => {
+                                  setSenhaGerada({ userId: u.id, senha: novaSenha });
+                                  setResetAlvo(null);
+                                  toast.success("Senha redefinida");
+                                },
+                                onError: (er: Error) => toast.error(er.message),
+                              },
+                            );
+                          }}
+                          className="rounded-sm bg-primary px-2 py-1 text-[11px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                        >
+                          Confirmar redefinição
+                        </button>
+                      </div>
+                    )}
+
+                    {senhaGerada?.userId === u.id && (
+                      <div className="mt-2 rounded-sm border border-primary/40 bg-primary/5 p-2 text-left">
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          Senha provisória (exibida só agora)
+                        </p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <code className="font-mono text-xs">{senhaGerada.senha}</code>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(senhaGerada.senha);
+                              toast.success("Senha copiada");
+                            }}
+                            className="inline-flex items-center gap-1 rounded-sm border border-border px-1.5 py-0.5 text-[10px] hover:bg-accent"
+                          >
+                            <Copy className="size-3" /> Copiar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSenhaGerada(null)}
+                            className="text-[10px] text-muted-foreground underline"
+                          >
+                            Fechar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {u.ultimoReset && (
+                      <p className="mt-1 text-right text-[10px] text-muted-foreground">
+                        Última redefinição: {new Date(u.ultimoReset).toLocaleString("pt-BR")}
+                      </p>
+                    )}
                   </td>
                 </tr>
               ))}
+
             </tbody>
           </table>
         </div>
