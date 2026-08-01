@@ -23,6 +23,8 @@ export type Movimentacao = {
   observacao: string | null;
   data: string;
   produtos: { codigo: string; nome: string } | null;
+  usuario_id: string | null;
+  usuario: string | null;
 };
 
 export function useProdutos() {
@@ -85,14 +87,27 @@ export function useMovimentacoes(limite = 30, galpaoId?: string) {
       let q = supabase
         .from("movimentacoes")
         .select(
-          "id, tipo, area, rua, posicao, quantidade, validade, lote, observacao, data, produtos(codigo, nome)",
+          "id, tipo, area, rua, posicao, quantidade, validade, lote, observacao, data, usuario_id, produtos(codigo, nome)",
         )
         .order("data", { ascending: false })
         .limit(limite);
       if (galpaoId) q = q.eq("galpao_id", galpaoId);
       const { data, error } = await q;
       if (error) throw error;
-      return (data ?? []) as unknown as Movimentacao[];
+      const linhas = (data ?? []) as unknown as Movimentacao[];
+      const ids = [...new Set(linhas.map((m) => m.usuario_id).filter(Boolean))] as string[];
+      let nomes = new Map<string, string>();
+      if (ids.length > 0) {
+        const { data: perfis } = await supabase
+          .from("profiles")
+          .select("id, nome, email")
+          .in("id", ids);
+        nomes = new Map((perfis ?? []).map((p) => [p.id, p.nome ?? p.email ?? "—"]));
+      }
+      return linhas.map((m) => ({
+        ...m,
+        usuario: m.usuario_id ? (nomes.get(m.usuario_id) ?? null) : null,
+      }));
     },
   });
 }

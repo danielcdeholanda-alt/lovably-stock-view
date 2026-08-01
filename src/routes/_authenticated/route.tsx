@@ -1,6 +1,5 @@
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Toaster } from "sonner";
 import { LogOut, Warehouse } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePapel } from "@/lib/auth";
@@ -27,7 +26,6 @@ function Layout() {
   return (
     <EstruturaProvider>
       <div className="min-h-screen bg-background">
-        <Toaster position="top-right" theme="dark" />
         <Cabecalho />
         <Outlet />
       </div>
@@ -98,6 +96,12 @@ function Cabecalho() {
               </Link>
             </>
           )}
+          <Link
+            to="/trocar-senha"
+            className="rounded-sm border border-border px-3 py-1.5 transition hover:bg-accent [&.active]:border-primary [&.active]:text-primary"
+          >
+            Trocar senha
+          </Link>
           <button
             type="button"
             onClick={sair}

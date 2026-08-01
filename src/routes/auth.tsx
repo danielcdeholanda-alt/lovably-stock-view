@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 import { Warehouse } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { criarPrimeiroAdmin, precisaBootstrap } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/auth")({
-  ssr: false,
+
   head: () => ({
     meta: [
       { title: "Entrar | Controle de Estoque FIFO" },
@@ -80,7 +80,7 @@ function AuthPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Toaster position="top-right" theme="dark" />
+      
       <div className="w-full max-w-sm rounded-md border border-border bg-card p-6">
         <div className="mb-5 flex items-center gap-3">
           <span className="flex size-9 items-center justify-center rounded-sm bg-primary text-primary-foreground">

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { traduzir } from "@/lib/admin-mensagens";
 
 const novoUsuario = z.object({
   email: z.string().email(),
@@ -40,7 +41,7 @@ export const criarPrimeiroAdmin = createServerFn({ method: "POST" })
       email_confirm: true,
       user_metadata: { nome: data.nome },
     });
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(traduzir(error.message));
     return { ok: true };
   });
 
@@ -77,6 +78,11 @@ export const redefinirSenha = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await garantirAdmin(context.supabase as never, context.userId);
+    if (data.userId === context.userId) {
+      throw new Error(
+        "Use a opção “Trocar minha senha” para alterar a sua própria senha.",
+      );
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: alvo } = await supabaseAdmin.auth.admin.getUserById(data.userId);
@@ -86,7 +92,10 @@ export const redefinirSenha = createServerFn({ method: "POST" })
       password: data.senha,
       user_metadata: { ...(alvo.user.user_metadata ?? {}), senha_provisoria: true },
     });
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(traduzir(error.message));
+
+    // Encerra todas as sessões ativas do usuário: a senha antiga deixa de valer na hora.
+    await supabaseAdmin.auth.admin.signOut(data.userId, "global").catch(() => undefined);
 
     await supabaseAdmin
       .from("password_resets")
@@ -94,6 +103,7 @@ export const redefinirSenha = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
 
 
 export const criarUsuario = createServerFn({ method: "POST" })
@@ -108,7 +118,7 @@ export const criarUsuario = createServerFn({ method: "POST" })
       email_confirm: true,
       user_metadata: { nome: data.nome, role: data.role, senha_provisoria: true },
     });
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(traduzir(error.message));
     return { id: criado.user?.id };
   });
 
@@ -136,6 +146,6 @@ export const excluirUsuario = createServerFn({ method: "POST" })
     if (data.userId === context.userId) throw new Error("Você não pode excluir a si mesmo");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(traduzir(error.message));
     return { ok: true };
   });

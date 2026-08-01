@@ -90,6 +90,7 @@ export type Database = {
           quantidade: number
           rua: number
           tipo: string
+          usuario_id: string | null
           validade: string | null
         }
         Insert: {
@@ -105,6 +106,7 @@ export type Database = {
           quantidade: number
           rua: number
           tipo: string
+          usuario_id?: string | null
           validade?: string | null
         }
         Update: {
@@ -120,6 +122,7 @@ export type Database = {
           quantidade?: number
           rua?: number
           tipo?: string
+          usuario_id?: string | null
           validade?: string | null
         }
         Relationships: [

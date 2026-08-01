@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UserPlus, Trash2, KeyRound, Copy, RefreshCw } from "lucide-react";
 import { usePapel } from "@/lib/auth";
+import { senhaFraca } from "@/lib/admin-mensagens";
 import {
   criarUsuario,
   definirPapel,
@@ -48,7 +49,8 @@ const btnCls =
   "inline-flex items-center gap-1.5 rounded-sm bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50";
 
 function UsuariosPage() {
-  const { isAdmin, carregando } = usePapel();
+  const { isAdmin, carregando, session } = usePapel();
+  const meuId = session?.user.id;
   const qc = useQueryClient();
   const usuarios = useQuery({ queryKey: ["usuarios"], queryFn: () => listarUsuarios(), enabled: isAdmin });
   const invalidar = () => qc.invalidateQueries({ queryKey: ["usuarios"] });
@@ -93,7 +95,9 @@ function UsuariosPage() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (senha.length < 8) return toast.error("A senha deve ter ao menos 8 caracteres");
+          const fraca = senhaFraca(senha);
+          if (fraca) return toast.error(fraca);
+          if (!nome.trim()) return toast.error("Informe o nome do usuário");
           criar.mutate(
             { email, senha, nome, role },
             {
@@ -153,7 +157,7 @@ function UsuariosPage() {
           Usuários do sistema
         </header>
         <div className="overflow-auto">
-          <table className="w-full text-xs">
+          <table className="w-full min-w-[560px] text-xs">
             <thead className="text-left text-muted-foreground">
               <tr>
                 <th className="px-3 py-2">Nome</th>
@@ -191,23 +195,44 @@ function UsuariosPage() {
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex flex-wrap justify-end gap-1">
+                      {u.id === meuId && (
+                        <span className="rounded-sm border border-border px-2 py-1 text-[11px] text-muted-foreground">
+                          Sua conta
+                        </span>
+                      )}
                       <button
                         type="button"
+                        disabled={u.id === meuId}
+                        title={
+                          u.id === meuId
+                            ? "Use a tela “Trocar senha” para alterar a sua própria senha"
+                            : undefined
+                        }
                         onClick={() => {
                           setSenhaGerada(null);
                           setNovaSenha(gerarSenha());
                           setResetAlvo(resetAlvo === u.id ? null : u.id);
                         }}
-                        className="inline-flex items-center gap-1 rounded-sm border border-border px-2 py-1 text-[11px] hover:bg-accent"
+                        className="inline-flex items-center gap-1 rounded-sm border border-border px-2 py-1 text-[11px] hover:bg-accent disabled:opacity-40"
                       >
                         <KeyRound className="size-3" /> Redefinir senha
                       </button>
                       <button
                         type="button"
-                        onClick={() =>
-                          remover.mutate(u.id, { onError: (er: Error) => toast.error(er.message) })
-                        }
-                        className="inline-flex items-center gap-1 rounded-sm border border-border px-2 py-1 text-[11px] hover:bg-accent"
+                        disabled={u.id === meuId}
+                        onClick={() => {
+                          if (
+                            !window.confirm(
+                              `Excluir definitivamente o usuário ${u.nome ?? u.email}? Esta ação não pode ser desfeita.`,
+                            )
+                          )
+                            return;
+                          remover.mutate(u.id, {
+                            onSuccess: () => toast.success("Usuário excluído"),
+                            onError: (er: Error) => toast.error(er.message),
+                          });
+                        }}
+                        className="inline-flex items-center gap-1 rounded-sm border border-border px-2 py-1 text-[11px] hover:bg-accent disabled:opacity-40"
                       >
                         <Trash2 className="size-3" /> Excluir
                       </button>
@@ -234,8 +259,14 @@ function UsuariosPage() {
                           type="button"
                           disabled={resetar.isPending}
                           onClick={() => {
-                            if (novaSenha.length < 8)
-                              return toast.error("A senha deve ter ao menos 8 caracteres");
+                            const fraca = senhaFraca(novaSenha);
+                            if (fraca) return toast.error(fraca);
+                            if (
+                              !window.confirm(
+                                `Redefinir a senha de ${u.nome ?? u.email}? As sessões abertas dele serão encerradas.`,
+                              )
+                            )
+                              return;
                             resetar.mutate(
                               { userId: u.id, senha: novaSenha },
                               {
@@ -258,7 +289,7 @@ function UsuariosPage() {
                     {senhaGerada?.userId === u.id && (
                       <div className="mt-2 rounded-sm border border-primary/40 bg-primary/5 p-2 text-left">
                         <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                          Senha provisória (exibida só agora)
+                          Senha provisória — anote agora, ela não será exibida novamente
                         </p>
                         <div className="mt-1 flex items-center gap-2">
                           <code className="font-mono text-xs">{senhaGerada.senha}</code>
@@ -291,7 +322,20 @@ function UsuariosPage() {
                   </td>
                 </tr>
               ))}
-
+              {usuarios.isSuccess && (usuarios.data ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">
+                    Nenhum usuário cadastrado ainda.
+                  </td>
+                </tr>
+              )}
+              {usuarios.isLoading && (
+                <tr>
+                  <td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">
+                    Carregando usuários…
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
