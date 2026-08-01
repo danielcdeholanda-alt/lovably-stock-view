@@ -80,7 +80,7 @@ function AuthPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Toaster position="top-right" theme="dark" />
+      
       <div className="w-full max-w-sm rounded-md border border-border bg-card p-6">
         <div className="mb-5 flex items-center gap-3">
           <span className="flex size-9 items-center justify-center rounded-sm bg-primary text-primary-foreground">
