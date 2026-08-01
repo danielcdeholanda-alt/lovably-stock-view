@@ -80,7 +80,7 @@ export const redefinirSenha = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: alvo } = await supabaseAdmin.auth.admin.getUserById(data.userId);
-    if (!alvo.user) throw new Error("Usuário не encontrado".replace("не", "não"));
+    if (!alvo.user) throw new Error("Usuário não encontrado");
 
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
       password: data.senha,
