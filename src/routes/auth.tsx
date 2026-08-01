@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 import { Warehouse } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { criarPrimeiroAdmin, precisaBootstrap } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/auth")({
-  ssr: false,
+
   head: () => ({
     meta: [
       { title: "Entrar | Controle de Estoque FIFO" },
