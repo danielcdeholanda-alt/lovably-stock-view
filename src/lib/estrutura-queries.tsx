@@ -20,7 +20,6 @@ export type Galpao = {
   ativo: boolean;
   padrao: boolean;
   politica_saida: "FIFO" | "FEFO" | "MANUAL";
-  tipo_armazenagem: string | null;
 };
 
 export type Area = { id: string; galpao_id: string; nome: string; ordem: number };
@@ -31,7 +30,7 @@ export function useGalpoes() {
     queryFn: async (): Promise<Galpao[]> => {
       const { data, error } = await supabase
         .from("galpoes")
-        .select("id, nome, codigo, ativo, padrao, politica_saida, tipo_armazenagem")
+        .select("id, nome, codigo, ativo, padrao, politica_saida")
         .order("nome");
       if (error) throw error;
       return data ?? [];
