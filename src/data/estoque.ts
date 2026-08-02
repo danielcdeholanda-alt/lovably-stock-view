@@ -104,6 +104,7 @@ export type CelulaPalete = {
   area: string;
   rua: number;
   posicao: number;
+  nivel: number | null;
   item?: ItemEstoque;
 };
 
@@ -114,17 +115,25 @@ export function buildMapaArea(
 ): CelulaPalete[][] {
   const porChave = new Map<string, ItemEstoque>();
   for (const i of itens) {
-    if (i.area === area) porChave.set(`${i.rua}-${i.posicao}`, i);
+    if (i.area === area) porChave.set(`${i.rua}-${i.posicao}-${i.nivel ?? 1}`, i);
   }
-  return ruasDaArea(ruas, area).map((r) =>
-    Array.from({ length: posicoesDaRua(r) }, (_, k) => ({
-      area,
-      rua: r.rua,
-      posicao: k + 1,
-      item: porChave.get(`${r.rua}-${k + 1}`),
-    })),
-  );
+  return ruasDaArea(ruas, area).map((r) => {
+    const celulas: CelulaPalete[] = [];
+    for (let p = 1; p <= r.capacidade; p++) {
+      for (let n = 1; n <= r.niveis; n++) {
+        celulas.push({
+          area,
+          rua: r.rua,
+          posicao: p,
+          nivel: r.niveis > 1 ? n : null,
+          item: porChave.get(`${r.rua}-${p}-${n}`),
+        });
+      }
+    }
+    return celulas;
+  });
 }
+
 
 export function resumoAreas(ruas: RuaEstrutura[], itens: ItemEstoque[]) {
   return areasDeRuas(ruas).map((area) => {
