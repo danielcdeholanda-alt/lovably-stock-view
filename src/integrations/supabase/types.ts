@@ -16,25 +16,31 @@ export type Database = {
     Tables: {
       areas: {
         Row: {
+          altura_max: number
           created_at: string
           galpao_id: string
           id: string
           nome: string
           ordem: number
+          tipo_armazenagem: Database["public"]["Enums"]["tipo_armazenagem"]
         }
         Insert: {
+          altura_max?: number
           created_at?: string
           galpao_id: string
           id?: string
           nome: string
           ordem?: number
+          tipo_armazenagem?: Database["public"]["Enums"]["tipo_armazenagem"]
         }
         Update: {
+          altura_max?: number
           created_at?: string
           galpao_id?: string
           id?: string
           nome?: string
           ordem?: number
+          tipo_armazenagem?: Database["public"]["Enums"]["tipo_armazenagem"]
         }
         Relationships: [
           {
@@ -46,32 +52,150 @@ export type Database = {
           },
         ]
       }
+      auditoria: {
+        Row: {
+          acao: string
+          created_at: string
+          id: string
+          motivo: string | null
+          registro_id: string | null
+          tabela: string
+          usuario_id: string | null
+          valor_anterior: Json | null
+          valor_novo: Json | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          registro_id?: string | null
+          tabela: string
+          usuario_id?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          registro_id?: string | null
+          tabela?: string
+          usuario_id?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+        }
+        Relationships: []
+      }
+      enderecos: {
+        Row: {
+          area: string
+          area_id: string
+          ativo: boolean
+          bloco: string | null
+          capacidade: number
+          codigo: string
+          created_at: string
+          galpao_id: string
+          id: string
+          nivel: number | null
+          posicao: number | null
+          rua: number | null
+          rua_id: string | null
+          status: Database["public"]["Enums"]["endereco_status"]
+          updated_at: string
+        }
+        Insert: {
+          area: string
+          area_id: string
+          ativo?: boolean
+          bloco?: string | null
+          capacidade?: number
+          codigo: string
+          created_at?: string
+          galpao_id: string
+          id?: string
+          nivel?: number | null
+          posicao?: number | null
+          rua?: number | null
+          rua_id?: string | null
+          status?: Database["public"]["Enums"]["endereco_status"]
+          updated_at?: string
+        }
+        Update: {
+          area?: string
+          area_id?: string
+          ativo?: boolean
+          bloco?: string | null
+          capacidade?: number
+          codigo?: string
+          created_at?: string
+          galpao_id?: string
+          id?: string
+          nivel?: number | null
+          posicao?: number | null
+          rua?: number | null
+          rua_id?: string | null
+          status?: Database["public"]["Enums"]["endereco_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enderecos_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enderecos_galpao_id_fkey"
+            columns: ["galpao_id"]
+            isOneToOne: false
+            referencedRelation: "galpoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enderecos_rua_id_fkey"
+            columns: ["rua_id"]
+            isOneToOne: false
+            referencedRelation: "ruas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       galpoes: {
         Row: {
           ativo: boolean
           codigo: string
           created_at: string
+          descricao: string | null
           id: string
           nome: string
           padrao: boolean
+          politica_saida: Database["public"]["Enums"]["politica_saida"]
           updated_at: string
         }
         Insert: {
           ativo?: boolean
           codigo: string
           created_at?: string
+          descricao?: string | null
           id?: string
           nome: string
           padrao?: boolean
+          politica_saida?: Database["public"]["Enums"]["politica_saida"]
           updated_at?: string
         }
         Update: {
           ativo?: boolean
           codigo?: string
           created_at?: string
+          descricao?: string | null
           id?: string
           nome?: string
           padrao?: boolean
+          politica_saida?: Database["public"]["Enums"]["politica_saida"]
           updated_at?: string
         }
         Relationships: []
@@ -79,53 +203,94 @@ export type Database = {
       movimentacoes: {
         Row: {
           area: string
+          area_destino: string | null
           created_at: string
           data: string
+          endereco_destino_id: string | null
+          endereco_id: string | null
           galpao_id: string
           id: string
           lote: string | null
+          motivo: string | null
           observacao: string | null
+          palete_codigo: string | null
+          palete_id: string | null
           posicao: number
+          posicao_destino: number | null
           produto_id: string
           quantidade: number
+          quantidade_anterior: number | null
           rua: number
+          rua_destino: number | null
           tipo: string
           usuario_id: string | null
           validade: string | null
         }
         Insert: {
           area: string
+          area_destino?: string | null
           created_at?: string
           data?: string
+          endereco_destino_id?: string | null
+          endereco_id?: string | null
           galpao_id: string
           id?: string
           lote?: string | null
+          motivo?: string | null
           observacao?: string | null
+          palete_codigo?: string | null
+          palete_id?: string | null
           posicao: number
+          posicao_destino?: number | null
           produto_id: string
           quantidade: number
+          quantidade_anterior?: number | null
           rua: number
+          rua_destino?: number | null
           tipo: string
           usuario_id?: string | null
           validade?: string | null
         }
         Update: {
           area?: string
+          area_destino?: string | null
           created_at?: string
           data?: string
+          endereco_destino_id?: string | null
+          endereco_id?: string | null
           galpao_id?: string
           id?: string
           lote?: string | null
+          motivo?: string | null
           observacao?: string | null
+          palete_codigo?: string | null
+          palete_id?: string | null
           posicao?: number
+          posicao_destino?: number | null
           produto_id?: string
           quantidade?: number
+          quantidade_anterior?: number | null
           rua?: number
+          rua_destino?: number | null
           tipo?: string
           usuario_id?: string | null
           validade?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "movimentacoes_endereco_destino_id_fkey"
+            columns: ["endereco_destino_id"]
+            isOneToOne: false
+            referencedRelation: "enderecos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_endereco_id_fkey"
+            columns: ["endereco_id"]
+            isOneToOne: false
+            referencedRelation: "enderecos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "movimentacoes_galpao_id_fkey"
             columns: ["galpao_id"]
@@ -145,7 +310,11 @@ export type Database = {
       paletes: {
         Row: {
           area: string
+          codigo: string
           created_at: string
+          data_entrada: string
+          data_fabricacao: string | null
+          endereco_id: string | null
           galpao_id: string
           id: string
           lote: string | null
@@ -153,11 +322,19 @@ export type Database = {
           produto_id: string
           quantidade: number
           rua: number
+          status: Database["public"]["Enums"]["palete_status"]
+          ultima_mov_em: string | null
+          ultima_mov_por: string | null
+          usuario_entrada: string | null
           validade: string
         }
         Insert: {
           area: string
+          codigo?: string
           created_at?: string
+          data_entrada?: string
+          data_fabricacao?: string | null
+          endereco_id?: string | null
           galpao_id: string
           id?: string
           lote?: string | null
@@ -165,11 +342,19 @@ export type Database = {
           produto_id: string
           quantidade: number
           rua: number
+          status?: Database["public"]["Enums"]["palete_status"]
+          ultima_mov_em?: string | null
+          ultima_mov_por?: string | null
+          usuario_entrada?: string | null
           validade: string
         }
         Update: {
           area?: string
+          codigo?: string
           created_at?: string
+          data_entrada?: string
+          data_fabricacao?: string | null
+          endereco_id?: string | null
           galpao_id?: string
           id?: string
           lote?: string | null
@@ -177,9 +362,20 @@ export type Database = {
           produto_id?: string
           quantidade?: number
           rua?: number
+          status?: Database["public"]["Enums"]["palete_status"]
+          ultima_mov_em?: string | null
+          ultima_mov_por?: string | null
+          usuario_entrada?: string | null
           validade?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "paletes_endereco_id_fkey"
+            columns: ["endereco_id"]
+            isOneToOne: false
+            referencedRelation: "enderecos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "paletes_galpao_id_fkey"
             columns: ["galpao_id"]
@@ -370,7 +566,11 @@ export type Database = {
         }
         Returns: {
           area: string
+          codigo: string
           created_at: string
+          data_entrada: string
+          data_fabricacao: string | null
+          endereco_id: string | null
           galpao_id: string
           id: string
           lote: string | null
@@ -378,6 +578,10 @@ export type Database = {
           produto_id: string
           quantidade: number
           rua: number
+          status: Database["public"]["Enums"]["palete_status"]
+          ultima_mov_em: string | null
+          ultima_mov_por: string | null
+          usuario_entrada: string | null
           validade: string
         }
         SetofOptions: {
@@ -394,6 +598,25 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "operador"
+      endereco_status:
+        | "livre"
+        | "ocupado"
+        | "reservado"
+        | "bloqueado"
+        | "interditado"
+      palete_status:
+        | "disponivel"
+        | "reservado"
+        | "bloqueado"
+        | "quarentena"
+        | "expedido"
+      politica_saida: "FIFO" | "FEFO" | "MANUAL"
+      tipo_armazenagem:
+        | "porta_paletes"
+        | "palete_chao"
+        | "blocado"
+        | "empilhamento"
+        | "outro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -522,6 +745,28 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "operador"],
+      endereco_status: [
+        "livre",
+        "ocupado",
+        "reservado",
+        "bloqueado",
+        "interditado",
+      ],
+      palete_status: [
+        "disponivel",
+        "reservado",
+        "bloqueado",
+        "quarentena",
+        "expedido",
+      ],
+      politica_saida: ["FIFO", "FEFO", "MANUAL"],
+      tipo_armazenagem: [
+        "porta_paletes",
+        "palete_chao",
+        "blocado",
+        "empilhamento",
+        "outro",
+      ],
     },
   },
 } as const
