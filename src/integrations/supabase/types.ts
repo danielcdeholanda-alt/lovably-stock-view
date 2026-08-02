@@ -546,12 +546,48 @@ export type Database = {
         }
         Returns: number
       }
+      definir_status_palete: {
+        Args: {
+          p_motivo?: string
+          p_palete_id: string
+          p_status: Database["public"]["Enums"]["palete_status"]
+        }
+        Returns: undefined
+      }
+      exigir_login: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      previa_saida: {
+        Args: {
+          p_area?: string
+          p_galpao_id: string
+          p_lote?: string
+          p_paletes: number
+          p_produto_id: string
+        }
+        Returns: {
+          codigo: string
+          data_entrada: string
+          endereco: string
+          id: string
+          lote: string
+          quantidade: number
+          validade: string
+        }[]
+      }
+      registrar_ajuste: {
+        Args: {
+          p_motivo: string
+          p_observacao?: string
+          p_palete_id: string
+          p_quantidade_contada: number
+        }
+        Returns: undefined
       }
       registrar_entrada: {
         Args: {
@@ -591,8 +627,57 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      registrar_entrada_lote: {
+        Args: {
+          p_area: string
+          p_data_entrada?: string
+          p_data_fabricacao?: string
+          p_galpao_id?: string
+          p_lote?: string
+          p_observacao?: string
+          p_paletes?: number
+          p_produto_id: string
+          p_quantidade: number
+          p_rua: number
+          p_validade: string
+        }
+        Returns: {
+          codigo: string
+          data_entrada: string
+          endereco: string
+          id: string
+          quantidade: number
+          validade: string
+        }[]
+      }
       registrar_saida: {
         Args: { p_observacao?: string; p_palete_id: string }
+        Returns: undefined
+      }
+      registrar_saida_por_regra: {
+        Args: {
+          p_area?: string
+          p_galpao_id: string
+          p_lote?: string
+          p_observacao?: string
+          p_palete_ids?: string[]
+          p_paletes?: number
+          p_produto_id?: string
+        }
+        Returns: {
+          codigo: string
+          endereco: string
+          id: string
+          quantidade: number
+          validade: string
+        }[]
+      }
+      registrar_transferencia: {
+        Args: {
+          p_endereco_destino_id: string
+          p_motivo?: string
+          p_palete_id: string
+        }
         Returns: undefined
       }
     }
