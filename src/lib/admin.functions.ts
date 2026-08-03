@@ -86,7 +86,13 @@ export const redefinirSenha = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: alvo } = await supabaseAdmin.auth.admin.getUserById(data.userId);
-    if (!alvo.user) throw new Error("Usuário não encontrado");
+    if (!alvo.user) {
+      // O login desse usuário já foi excluído: limpa o perfil órfão e avisa o admin.
+      await supabaseAdmin.from("profiles").delete().eq("id", data.userId);
+      throw new Error(
+        "Esse usuário não existe mais no sistema de acesso. A lista foi atualizada — cadastre-o novamente se precisar.",
+      );
+    }
 
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
       password: data.senha,
