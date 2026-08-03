@@ -61,13 +61,17 @@ export const listarUsuarios = createServerFn({ method: "GET" })
       .select("user_id, created_at")
       .order("created_at", { ascending: false });
     const { data: lista } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    return (perfis ?? []).map((p) => ({
-      ...p,
-      roles: (papeis ?? []).filter((r) => r.user_id === p.id).map((r) => r.role as string),
-      ultimoReset: (resets ?? []).find((r) => r.user_id === p.id)?.created_at ?? null,
-      senhaProvisoria:
-        (lista?.users ?? []).find((u) => u.id === p.id)?.user_metadata?.senha_provisoria === true,
-    }));
+    const authUsers = lista?.users ?? [];
+    return (perfis ?? [])
+      // Ignora perfis cujo login já foi excluído (evita ações sobre usuários inexistentes).
+      .filter((p) => authUsers.some((u) => u.id === p.id))
+      .map((p) => ({
+        ...p,
+        roles: (papeis ?? []).filter((r) => r.user_id === p.id).map((r) => r.role as string),
+        ultimoReset: (resets ?? []).find((r) => r.user_id === p.id)?.created_at ?? null,
+        senhaProvisoria:
+          authUsers.find((u) => u.id === p.id)?.user_metadata?.senha_provisoria === true,
+      }));
   });
 
 /** Admin redefine a senha de um usuário. A senha nunca é armazenada nem recuperável depois. */
@@ -86,7 +90,13 @@ export const redefinirSenha = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: alvo } = await supabaseAdmin.auth.admin.getUserById(data.userId);
-    if (!alvo.user) throw new Error("Usuário não encontrado");
+    if (!alvo.user) {
+      // O login desse usuário já foi excluído: limpa o perfil órfão e avisa o admin.
+      await supabaseAdmin.from("profiles").delete().eq("id", data.userId);
+      throw new Error(
+        "Esse usuário não existe mais no sistema de acesso. A lista foi atualizada — cadastre-o novamente se precisar.",
+      );
+    }
 
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
       password: data.senha,
