@@ -36,10 +36,12 @@ const btnCls =
 function AuthPage() {
   const navigate = useNavigate();
   const [bootstrap, setBootstrap] = useState<boolean | null>(null);
+  const [modo, setModo] = useState<"login" | "recuperar">("login");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [nome, setNome] = useState("");
   const [ocupado, setOcupado] = useState(false);
+  const [enviado, setEnviado] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -57,6 +59,21 @@ function AuthPage() {
     setOcupado(false);
     if (error) return toast.error("E-mail ou senha inválidos");
     navigate({ to: "/dashboard", replace: true });
+  };
+
+  const recuperar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const alvo = email.trim();
+    if (!alvo) return toast.error("Informe seu e-mail");
+    setOcupado(true);
+    // Resposta sempre neutra: não revelamos se o e-mail existe.
+    await supabase.auth
+      .resetPasswordForEmail(alvo, {
+        redirectTo: `${window.location.origin}/redefinir-senha`,
+      })
+      .catch(() => undefined);
+    setOcupado(false);
+    setEnviado(true);
   };
 
   const criarAdmin = async (e: React.FormEvent) => {
@@ -78,6 +95,8 @@ function AuthPage() {
     }
   };
 
+  const recuperando = modo === "recuperar" && !bootstrap;
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4">
       
@@ -89,44 +108,100 @@ function AuthPage() {
           <div>
             <h1 className="text-base font-bold uppercase tracking-wide">Controle de Estoque</h1>
             <p className="text-xs text-muted-foreground">
-              {bootstrap ? "Crie o primeiro administrador" : "Acesso restrito"}
+              {bootstrap
+                ? "Crie o primeiro administrador"
+                : recuperando
+                  ? "Recuperar acesso"
+                  : "Acesso restrito"}
             </p>
           </div>
         </div>
 
-        <form onSubmit={bootstrap ? criarAdmin : entrar} className="space-y-3">
-          {bootstrap && (
-            <div>
-              <label className={labelCls}>Nome</label>
-              <input value={nome} onChange={(e) => setNome(e.target.value)} className={inputCls} />
+        {recuperando ? (
+          enviado ? (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Se o e-mail estiver cadastrado, enviaremos as instruções para redefinir sua senha.
+              </p>
+              <button
+                type="button"
+                className={btnCls}
+                onClick={() => {
+                  setEnviado(false);
+                  setModo("login");
+                }}
+              >
+                Voltar
+              </button>
             </div>
-          )}
-          <div>
-            <label className={labelCls}>E-mail</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={inputCls}
-              autoComplete="email"
-            />
-          </div>
-          <div>
-            <label className={labelCls}>Senha</label>
-            <input
-              type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              className={inputCls}
-              autoComplete="current-password"
-            />
-          </div>
-          <button type="submit" className={btnCls} disabled={ocupado}>
-            {ocupado ? "Aguarde…" : bootstrap ? "Criar administrador" : "Entrar"}
-          </button>
-        </form>
+          ) : (
+            <form onSubmit={recuperar} className="space-y-3">
+              <div>
+                <label className={labelCls}>E-mail</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={inputCls}
+                  autoComplete="email"
+                />
+              </div>
+              <button type="submit" className={btnCls} disabled={ocupado}>
+                {ocupado ? "Enviando…" : "Enviar instruções"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setModo("login")}
+                className="w-full text-center text-[11px] text-muted-foreground underline-offset-2 hover:underline"
+              >
+                Voltar
+              </button>
+            </form>
+          )
+        ) : (
+          <form onSubmit={bootstrap ? criarAdmin : entrar} className="space-y-3">
+            {bootstrap && (
+              <div>
+                <label className={labelCls}>Nome</label>
+                <input value={nome} onChange={(e) => setNome(e.target.value)} className={inputCls} />
+              </div>
+            )}
+            <div>
+              <label className={labelCls}>E-mail</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={inputCls}
+                autoComplete="email"
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Senha</label>
+              <input
+                type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                className={inputCls}
+                autoComplete="current-password"
+              />
+            </div>
+            <button type="submit" className={btnCls} disabled={ocupado}>
+              {ocupado ? "Aguarde…" : bootstrap ? "Criar administrador" : "Entrar"}
+            </button>
+            {!bootstrap && (
+              <button
+                type="button"
+                onClick={() => setModo("recuperar")}
+                className="w-full text-center text-[11px] text-muted-foreground underline-offset-2 hover:underline"
+              >
+                Esqueci minha senha
+              </button>
+            )}
+          </form>
+        )}
 
-        {!bootstrap && (
+        {!bootstrap && !recuperando && (
           <p className="mt-4 text-center text-[11px] text-muted-foreground">
             Cadastro fechado — solicite uma conta ao administrador do sistema.
           </p>
@@ -135,3 +210,4 @@ function AuthPage() {
     </main>
   );
 }
+
