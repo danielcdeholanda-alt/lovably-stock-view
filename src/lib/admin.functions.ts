@@ -61,13 +61,17 @@ export const listarUsuarios = createServerFn({ method: "GET" })
       .select("user_id, created_at")
       .order("created_at", { ascending: false });
     const { data: lista } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    return (perfis ?? []).map((p) => ({
-      ...p,
-      roles: (papeis ?? []).filter((r) => r.user_id === p.id).map((r) => r.role as string),
-      ultimoReset: (resets ?? []).find((r) => r.user_id === p.id)?.created_at ?? null,
-      senhaProvisoria:
-        (lista?.users ?? []).find((u) => u.id === p.id)?.user_metadata?.senha_provisoria === true,
-    }));
+    const authUsers = lista?.users ?? [];
+    return (perfis ?? [])
+      // Ignora perfis cujo login já foi excluído (evita ações sobre usuários inexistentes).
+      .filter((p) => authUsers.some((u) => u.id === p.id))
+      .map((p) => ({
+        ...p,
+        roles: (papeis ?? []).filter((r) => r.user_id === p.id).map((r) => r.role as string),
+        ultimoReset: (resets ?? []).find((r) => r.user_id === p.id)?.created_at ?? null,
+        senhaProvisoria:
+          authUsers.find((u) => u.id === p.id)?.user_metadata?.senha_provisoria === true,
+      }));
   });
 
 /** Admin redefine a senha de um usuário. A senha nunca é armazenada nem recuperável depois. */
