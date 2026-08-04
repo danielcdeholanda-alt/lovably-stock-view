@@ -20,6 +20,8 @@ export function MapaEstoque({ itens }: { itens: ItemEstoque[] }) {
   const [areaSel, setArea] = useState<string>("");
   const area = areaSel || AREAS[0] || "";
   const [sel, setSel] = useState<CelulaPalete | null>(null);
+  const [paleteAcao, setPaleteAcao] = useState<ItemEstoque | null>(null);
+
   const mapa = useMemo(
     () => (area ? estrutura.buildMapaArea(itens, area) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
