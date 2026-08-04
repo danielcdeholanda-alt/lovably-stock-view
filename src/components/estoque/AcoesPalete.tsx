@@ -94,7 +94,7 @@ function Conteudo({
       </div>
 
       {!disponivel && (
-        <p className="rounded-md border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn-foreground">
+        <p className="rounded-md border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">
           Este palete está {PALETE_STATUS_LABEL[item.status].toLowerCase()}. Desbloqueie no painel
           de movimentação antes de retirar ou transferir.
         </p>
