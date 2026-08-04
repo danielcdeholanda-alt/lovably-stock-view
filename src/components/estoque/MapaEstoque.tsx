@@ -125,6 +125,13 @@ export function MapaEstoque({ itens }: { itens: ItemEstoque[] }) {
                 value={new Date(sel.item.validade + "T00:00:00Z").toLocaleDateString("pt-BR")}
               />
               <p className="col-span-full text-xs text-muted-foreground">{sel.item.descricao}</p>
+              <button
+                type="button"
+                onClick={() => setPaleteAcao(sel.item!)}
+                className="col-span-full w-fit rounded-sm border border-border px-3 py-1 text-xs font-medium hover:border-primary hover:text-primary"
+              >
+                Retirar ou transferir
+              </button>
             </div>
           ) : (
             <p className="text-muted-foreground">
@@ -133,11 +140,21 @@ export function MapaEstoque({ itens }: { itens: ItemEstoque[] }) {
           )
         ) : (
           <p className="text-muted-foreground">
-            Selecione uma posição de palete no mapa para ver detalhes.
+            Clique em uma posição ocupada para ver detalhes e solicitar retirada ou transferência.
           </p>
         )}
       </div>
+
+      <AcoesPalete
+        item={paleteAcao}
+        aberto={!!paleteAcao}
+        onFechar={() => {
+          setPaleteAcao(null);
+          setSel(null);
+        }}
+      />
     </section>
+
   );
 }
 
