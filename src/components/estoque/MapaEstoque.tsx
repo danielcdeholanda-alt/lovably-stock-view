@@ -88,12 +88,16 @@ export function MapaEstoque({ itens }: { itens: ItemEstoque[] }) {
               </span>
               {linha.map((c) => (
                 <button
-                  key={c.posicao}
+                  key={`${c.posicao}-${c.nivel ?? 1}`}
                   type="button"
-                  onClick={() => setSel(c)}
+                  onClick={() => {
+                    setSel(c);
+                    if (c.item) setPaleteAcao(c.item);
+                  }}
                   title={`${c.area}-${c.rua} · palete ${c.posicao}${
-                    c.item ? ` · ${c.item.codigo}` : " · livre"
+                    c.item ? ` · ${c.item.codigo} (clique para retirar ou transferir)` : " · livre"
                   }`}
+
                   className={cn(
                     "h-3.5 w-3.5 shrink-0 rounded-[2px] transition hover:ring-2 hover:ring-ring",
                     corPalete(c),
