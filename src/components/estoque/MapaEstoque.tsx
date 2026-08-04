@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { statusValidade, type CelulaPalete, type ItemEstoque } from "@/data/estoque";
 import { useEstrutura } from "@/lib/estrutura-queries";
+import { AcoesPalete } from "@/components/estoque/AcoesPalete";
 import { cn } from "@/lib/utils";
+
 
 function corPalete(c: CelulaPalete) {
   if (!c.item) return "bg-secondary/60";
@@ -18,6 +20,8 @@ export function MapaEstoque({ itens }: { itens: ItemEstoque[] }) {
   const [areaSel, setArea] = useState<string>("");
   const area = areaSel || AREAS[0] || "";
   const [sel, setSel] = useState<CelulaPalete | null>(null);
+  const [paleteAcao, setPaleteAcao] = useState<ItemEstoque | null>(null);
+
   const mapa = useMemo(
     () => (area ? estrutura.buildMapaArea(itens, area) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,12 +88,16 @@ export function MapaEstoque({ itens }: { itens: ItemEstoque[] }) {
               </span>
               {linha.map((c) => (
                 <button
-                  key={c.posicao}
+                  key={`${c.posicao}-${c.nivel ?? 1}`}
                   type="button"
-                  onClick={() => setSel(c)}
+                  onClick={() => {
+                    setSel(c);
+                    if (c.item) setPaleteAcao(c.item);
+                  }}
                   title={`${c.area}-${c.rua} · palete ${c.posicao}${
-                    c.item ? ` · ${c.item.codigo}` : " · livre"
+                    c.item ? ` · ${c.item.codigo} (clique para retirar ou transferir)` : " · livre"
                   }`}
+
                   className={cn(
                     "h-3.5 w-3.5 shrink-0 rounded-[2px] transition hover:ring-2 hover:ring-ring",
                     corPalete(c),
@@ -117,6 +125,13 @@ export function MapaEstoque({ itens }: { itens: ItemEstoque[] }) {
                 value={new Date(sel.item.validade + "T00:00:00Z").toLocaleDateString("pt-BR")}
               />
               <p className="col-span-full text-xs text-muted-foreground">{sel.item.descricao}</p>
+              <button
+                type="button"
+                onClick={() => setPaleteAcao(sel.item!)}
+                className="col-span-full w-fit rounded-sm border border-border px-3 py-1 text-xs font-medium hover:border-primary hover:text-primary"
+              >
+                Retirar ou transferir
+              </button>
             </div>
           ) : (
             <p className="text-muted-foreground">
@@ -125,11 +140,21 @@ export function MapaEstoque({ itens }: { itens: ItemEstoque[] }) {
           )
         ) : (
           <p className="text-muted-foreground">
-            Selecione uma posição de palete no mapa para ver detalhes.
+            Clique em uma posição ocupada para ver detalhes e solicitar retirada ou transferência.
           </p>
         )}
       </div>
+
+      <AcoesPalete
+        item={paleteAcao}
+        aberto={!!paleteAcao}
+        onFechar={() => {
+          setPaleteAcao(null);
+          setSel(null);
+        }}
+      />
     </section>
+
   );
 }
 
