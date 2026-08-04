@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { statusValidade, type CelulaPalete, type ItemEstoque } from "@/data/estoque";
 import { useEstrutura } from "@/lib/estrutura-queries";
+import { AcoesPalete } from "@/components/estoque/AcoesPalete";
 import { cn } from "@/lib/utils";
+
 
 function corPalete(c: CelulaPalete) {
   if (!c.item) return "bg-secondary/60";
