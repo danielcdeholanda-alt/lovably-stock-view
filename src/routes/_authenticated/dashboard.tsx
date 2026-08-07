@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Kpis } from "@/components/estoque/Kpis";
 import { MapaEstoque } from "@/components/estoque/MapaEstoque";
 import { Graficos } from "@/components/estoque/Graficos";
+import { AlertaFefo } from "@/components/estoque/AlertaFefo";
+
 import { AgrupamentoProdutos } from "@/components/estoque/AgrupamentoProdutos";
 import { TabelaEstoque } from "@/components/estoque/TabelaEstoque";
 import { PainelMovimentacao } from "@/components/estoque/PainelMovimentacao";
@@ -53,8 +55,10 @@ function Painel() {
       )}
 
       <Kpis itens={itens} />
+      <AlertaFefo />
       <PainelMovimentacao itens={itens} />
       <MapaEstoque itens={itens} />
+
       <Graficos itens={itens} />
       <AgrupamentoProdutos itens={itens} />
       <TabelaEstoque itens={itens} />

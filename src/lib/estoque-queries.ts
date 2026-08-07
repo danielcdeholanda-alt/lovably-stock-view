@@ -346,3 +346,141 @@ export function useStatusPalete() {
     onSuccess: invalidate,
   });
 }
+
+// ---------------- Regras de armazenagem (1 produto por rua + FEFO) ----------------
+
+export type SugestaoRua = {
+  area: string;
+  rua: number;
+  livres: number;
+  ocupados: number;
+  produto_atual: string | null;
+  prioridade: number;
+};
+
+/** Ruas que podem receber o produto (mesma rua do produto primeiro, depois vazias). */
+export function useSugestaoRuas(galpaoId?: string, produtoId?: string, paletes = 1) {
+  return useQuery({
+    queryKey: ["sugestao-ruas", galpaoId, produtoId, paletes],
+    enabled: !!galpaoId && !!produtoId,
+    queryFn: async (): Promise<SugestaoRua[]> => {
+      const { data, error } = await supabase.rpc("sugerir_ruas_fefo", {
+        p_galpao_id: galpaoId!,
+        p_produto_id: produtoId!,
+        p_paletes: paletes,
+      });
+      if (error) erro(error);
+      return (data ?? []) as unknown as SugestaoRua[];
+    },
+  });
+}
+
+export type PaleteForaDeOrdem = {
+  palete_id: string;
+  codigo: string;
+  area: string;
+  rua: number;
+  posicao: number;
+  validade: string;
+  endereco: string | null;
+  sugerido_posicao: number | null;
+  sugerido_endereco: string | null;
+};
+
+/** Paletes cuja posição não respeita a ordem de validade (FEFO) dentro da rua. */
+export function usePaletesForaDeOrdem(galpaoId?: string) {
+  return useQuery({
+    queryKey: ["fora-de-ordem", galpaoId],
+    enabled: !!galpaoId,
+    queryFn: async (): Promise<PaleteForaDeOrdem[]> => {
+      const { data, error } = await supabase.rpc("paletes_fora_de_ordem", {
+        p_galpao_id: galpaoId!,
+      });
+      if (error) erro(error);
+      return (data ?? []) as unknown as PaleteForaDeOrdem[];
+    },
+  });
+}
+
+// ---------------- Auditoria de movimentações (somente administrador) ----------------
+
+export type FiltroAuditoria = {
+  galpaoId?: string;
+  de?: string;
+  ate?: string;
+  usuarioId?: string;
+  produtoId?: string;
+  lote?: string;
+  palete?: string;
+  area?: string;
+  rua?: number;
+  posicao?: number;
+  tipo?: TipoMovimentacao;
+  limite?: number;
+};
+
+export type RegistroAuditoria = Movimentacao & {
+  galpao_id: string;
+  endereco_id: string | null;
+  endereco_destino_id: string | null;
+  palete_id: string | null;
+  created_at: string;
+};
+
+export function useAuditoria(filtro: FiltroAuditoria, ativo = true) {
+  return useQuery({
+    queryKey: ["auditoria-movimentacoes", filtro],
+    enabled: ativo,
+    queryFn: async (): Promise<RegistroAuditoria[]> => {
+      let q = supabase
+        .from("movimentacoes")
+        .select(
+          "id, tipo, galpao_id, area, rua, posicao, quantidade, quantidade_anterior, validade, lote, observacao, motivo, palete_id, palete_codigo, endereco_id, endereco_destino_id, area_destino, rua_destino, posicao_destino, data, created_at, usuario_id, produtos(codigo, nome)",
+        )
+        .order("data", { ascending: false })
+        .limit(filtro.limite ?? 500);
+
+      if (filtro.galpaoId) q = q.eq("galpao_id", filtro.galpaoId);
+      if (filtro.de) q = q.gte("data", `${filtro.de}T00:00:00Z`);
+      if (filtro.ate) q = q.lte("data", `${filtro.ate}T23:59:59Z`);
+      if (filtro.usuarioId) q = q.eq("usuario_id", filtro.usuarioId);
+      if (filtro.produtoId) q = q.eq("produto_id", filtro.produtoId);
+      if (filtro.lote) q = q.ilike("lote", `%${filtro.lote}%`);
+      if (filtro.palete) q = q.ilike("palete_codigo", `%${filtro.palete}%`);
+      if (filtro.area) q = q.eq("area", filtro.area);
+      if (filtro.rua) q = q.eq("rua", filtro.rua);
+      if (filtro.posicao) q = q.eq("posicao", filtro.posicao);
+      if (filtro.tipo) q = q.eq("tipo", filtro.tipo);
+
+      const { data, error } = await q;
+      if (error) erro(error);
+      const linhas = (data ?? []) as unknown as RegistroAuditoria[];
+      const ids = [...new Set(linhas.map((m) => m.usuario_id).filter(Boolean))] as string[];
+      let nomes = new Map<string, string>();
+      if (ids.length > 0) {
+        const { data: perfis } = await supabase
+          .from("profiles")
+          .select("id, nome, email")
+          .in("id", ids);
+        nomes = new Map((perfis ?? []).map((p) => [p.id, p.nome ?? p.email ?? "—"]));
+      }
+      return linhas.map((m) => ({
+        ...m,
+        usuario: m.usuario_id ? (nomes.get(m.usuario_id) ?? null) : null,
+      }));
+    },
+  });
+}
+
+/** Usuários que aparecem no histórico (para o filtro da auditoria). */
+export function useUsuariosAuditoria(ativo = true) {
+  return useQuery({
+    queryKey: ["usuarios-auditoria"],
+    enabled: ativo,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("id, nome, email").order("nome");
+      if (error) erro(error);
+      return (data ?? []).map((p) => ({ id: p.id, nome: p.nome ?? p.email ?? "—" }));
+    },
+  });
+}

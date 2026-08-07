@@ -2,6 +2,7 @@
 const REGRAS: Array<[RegExp, string]> = [
   [/duplicate key.*enderecos_codigo_unico/i, "Já existe um endereço com este código nesta área."],
   [/duplicate key.*idx_paletes_endereco_unico/i, "Este endereço já está ocupado."],
+
   [/duplicate key.*idx_paletes_codigo/i, "Já existe um palete com este código."],
   [/duplicate key.*produtos_codigo/i, "Já existe um produto com este código."],
   [/duplicate key/i, "Este registro já existe."],

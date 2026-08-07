@@ -27,6 +27,8 @@ import {
   useProdutos,
   useSaidaPorRegra,
   useStatusPalete,
+  useSugestaoRuas,
+
   useTransferencia,
   type PaleteSelecionado,
 } from "@/lib/estoque-queries";
@@ -182,6 +184,26 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
   const [fabricacao, setFabricacao] = useState("");
   const [lote, setLote] = useState("");
   const [observacao, setObservacao] = useState("");
+  const { data: sugestoes = [] } = useSugestaoRuas(
+    estrutura.galpaoId,
+    produto?.id,
+    Math.max(Number(paletes) || 1, 1),
+  );
+  /** Produto que já ocupa cada rua da área (regra: 1 produto por rua). */
+  const produtoDaRua = useMemo(() => {
+    const m = new Map<number, ItemEstoque>();
+    for (const i of itens) if (i.area === area && !m.has(i.rua)) m.set(i.rua, i);
+    return m;
+  }, [itens, area]);
+  const ocupanteRua = produtoDaRua.get(rua);
+  const ruaBloqueada = !!(produto && ocupanteRua && ocupanteRua.produtoId !== produto.id);
+  const posicaoFefo = useMemo(() => {
+    if (!validade) return null;
+    return (
+      itens.filter((i) => i.area === area && i.rua === rua && i.validade <= validade).length + 1
+    );
+  }, [itens, area, rua, validade]);
+
 
   const ruas = estrutura.ruasDaArea(area);
   const ocupados = itens.filter((i) => i.area === area && i.rua === rua).length;
@@ -190,6 +212,11 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!produto) return toast.error("Informe um código de produto válido");
+    if (ruaBloqueada)
+      return toast.error(
+        `A rua ${area}-${String(rua).padStart(2, "0")} já armazena ${ocupanteRua?.codigo}. Cada rua só pode ter um produto.`,
+      );
+
     const qtd = Number(quantidade);
     if (!qtd || qtd <= 0) return toast.error("Informe a quantidade de caixas por palete");
     const nPaletes = Number(paletes);
@@ -251,18 +278,59 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
         <div>
           <label className={labelCls}>Rua</label>
           <select value={rua} onChange={(e) => setRua(Number(e.target.value))} className={inputCls}>
-            {ruas.map((r) => (
-              <option key={r.rua} value={r.rua}>
-                {area}-{String(r.rua).padStart(2, "0")} ({r.capacidade * r.niveis} posições)
-              </option>
-            ))}
+            {ruas.map((r) => {
+              const dono = produtoDaRua.get(r.rua);
+              const bloqueada = !!(produto && dono && dono.produtoId !== produto.id);
+              return (
+                <option key={r.rua} value={r.rua} disabled={bloqueada}>
+                  {area}-{String(r.rua).padStart(2, "0")} ({r.capacidade * r.niveis} posições)
+                  {dono ? ` · ${dono.codigo}` : " · livre"}
+                  {bloqueada ? " — outro produto" : ""}
+                </option>
+              );
+            })}
           </select>
         </div>
       </div>
 
       <p className="font-mono text-xs text-muted-foreground">
         {capacidade - ocupados} endereço(s) livre(s) de {capacidade}
+        {ocupanteRua ? ` · rua ocupada por ${ocupanteRua.codigo}` : " · rua livre"}
+        {posicaoFefo ? ` · posição FEFO sugerida: ${String(posicaoFefo).padStart(2, "0")}` : ""}
       </p>
+
+      {ruaBloqueada && (
+        <p className="rounded-sm border border-dead/40 bg-dead/10 px-2 py-1.5 text-xs text-dead">
+          A rua {area}-{String(rua).padStart(2, "0")} já armazena o produto {ocupanteRua?.codigo} —{" "}
+          {ocupanteRua?.produto}. Cada rua só pode ter um produto: escolha outra rua.
+        </p>
+      )}
+
+      {produto && sugestoes.length > 0 && (
+        <div className="rounded-sm border border-border p-2">
+          <p className={labelCls}>Ruas sugeridas para este produto</p>
+          <div className="flex flex-wrap gap-1.5">
+            {sugestoes.slice(0, 8).map((s) => (
+              <button
+                key={`${s.area}-${s.rua}`}
+                type="button"
+                onClick={() => {
+                  setArea(s.area);
+                  setRua(s.rua);
+                }}
+                className={cn(
+                  "rounded-sm border px-2 py-1 font-mono text-[11px] transition hover:bg-accent",
+                  s.prioridade === 1 ? "border-ok text-ok" : "border-border text-muted-foreground",
+                )}
+                title={s.prioridade === 1 ? "Já tem este produto" : "Rua vazia"}
+              >
+                {s.area}-{String(s.rua).padStart(2, "0")} · {s.livres} livre(s)
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
 
       <div className="grid grid-cols-3 gap-3">
         <div>
