@@ -182,6 +182,26 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
   const [fabricacao, setFabricacao] = useState("");
   const [lote, setLote] = useState("");
   const [observacao, setObservacao] = useState("");
+  const { data: sugestoes = [] } = useSugestaoRuas(
+    estrutura.galpaoId,
+    produto?.id,
+    Math.max(Number(paletes) || 1, 1),
+  );
+  /** Produto que já ocupa cada rua da área (regra: 1 produto por rua). */
+  const produtoDaRua = useMemo(() => {
+    const m = new Map<number, ItemEstoque>();
+    for (const i of itens) if (i.area === area && !m.has(i.rua)) m.set(i.rua, i);
+    return m;
+  }, [itens, area]);
+  const ocupanteRua = produtoDaRua.get(rua);
+  const ruaBloqueada = !!(produto && ocupanteRua && ocupanteRua.produtoId !== produto.id);
+  const posicaoFefo = useMemo(() => {
+    if (!validade) return null;
+    return (
+      itens.filter((i) => i.area === area && i.rua === rua && i.validade <= validade).length + 1
+    );
+  }, [itens, area, rua, validade]);
+
 
   const ruas = estrutura.ruasDaArea(area);
   const ocupados = itens.filter((i) => i.area === area && i.rua === rua).length;
