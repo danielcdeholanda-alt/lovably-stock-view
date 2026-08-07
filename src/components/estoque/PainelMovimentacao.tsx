@@ -27,6 +27,8 @@ import {
   useProdutos,
   useSaidaPorRegra,
   useStatusPalete,
+  useSugestaoRuas,
+
   useTransferencia,
   type PaleteSelecionado,
 } from "@/lib/estoque-queries";
