@@ -94,6 +94,13 @@ function Cabecalho() {
               >
                 Usuários
               </Link>
+              <Link
+                to="/auditoria"
+                className="rounded-sm border border-border px-3 py-1.5 transition hover:bg-accent [&.active]:border-primary [&.active]:text-primary"
+              >
+                Auditoria
+              </Link>
+
             </>
           )}
           <Link
