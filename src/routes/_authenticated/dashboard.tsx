@@ -53,8 +53,10 @@ function Painel() {
       )}
 
       <Kpis itens={itens} />
+      <AlertaFefo />
       <PainelMovimentacao itens={itens} />
       <MapaEstoque itens={itens} />
+
       <Graficos itens={itens} />
       <AgrupamentoProdutos itens={itens} />
       <TabelaEstoque itens={itens} />
