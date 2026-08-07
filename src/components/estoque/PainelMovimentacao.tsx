@@ -273,18 +273,59 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
         <div>
           <label className={labelCls}>Rua</label>
           <select value={rua} onChange={(e) => setRua(Number(e.target.value))} className={inputCls}>
-            {ruas.map((r) => (
-              <option key={r.rua} value={r.rua}>
-                {area}-{String(r.rua).padStart(2, "0")} ({r.capacidade * r.niveis} posições)
-              </option>
-            ))}
+            {ruas.map((r) => {
+              const dono = produtoDaRua.get(r.rua);
+              const bloqueada = !!(produto && dono && dono.produtoId !== produto.id);
+              return (
+                <option key={r.rua} value={r.rua} disabled={bloqueada}>
+                  {area}-{String(r.rua).padStart(2, "0")} ({r.capacidade * r.niveis} posições)
+                  {dono ? ` · ${dono.codigo}` : " · livre"}
+                  {bloqueada ? " — outro produto" : ""}
+                </option>
+              );
+            })}
           </select>
         </div>
       </div>
 
       <p className="font-mono text-xs text-muted-foreground">
         {capacidade - ocupados} endereço(s) livre(s) de {capacidade}
+        {ocupanteRua ? ` · rua ocupada por ${ocupanteRua.codigo}` : " · rua livre"}
+        {posicaoFefo ? ` · posição FEFO sugerida: ${String(posicaoFefo).padStart(2, "0")}` : ""}
       </p>
+
+      {ruaBloqueada && (
+        <p className="rounded-sm border border-dead/40 bg-dead/10 px-2 py-1.5 text-xs text-dead">
+          A rua {area}-{String(rua).padStart(2, "0")} já armazena o produto {ocupanteRua?.codigo} —{" "}
+          {ocupanteRua?.produto}. Cada rua só pode ter um produto: escolha outra rua.
+        </p>
+      )}
+
+      {produto && sugestoes.length > 0 && (
+        <div className="rounded-sm border border-border p-2">
+          <p className={labelCls}>Ruas sugeridas para este produto</p>
+          <div className="flex flex-wrap gap-1.5">
+            {sugestoes.slice(0, 8).map((s) => (
+              <button
+                key={`${s.area}-${s.rua}`}
+                type="button"
+                onClick={() => {
+                  setArea(s.area);
+                  setRua(s.rua);
+                }}
+                className={cn(
+                  "rounded-sm border px-2 py-1 font-mono text-[11px] transition hover:bg-accent",
+                  s.prioridade === 1 ? "border-ok text-ok" : "border-border text-muted-foreground",
+                )}
+                title={s.prioridade === 1 ? "Já tem este produto" : "Rua vazia"}
+              >
+                {s.area}-{String(s.rua).padStart(2, "0")} · {s.livres} livre(s)
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
 
       <div className="grid grid-cols-3 gap-3">
         <div>
