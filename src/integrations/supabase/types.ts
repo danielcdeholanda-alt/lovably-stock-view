@@ -483,6 +483,7 @@ export type Database = {
           capacidade: number
           id: string
           niveis: number
+          produto_id: string | null
           rua: number
         }
         Insert: {
@@ -491,6 +492,7 @@ export type Database = {
           capacidade: number
           id?: string
           niveis?: number
+          produto_id?: string | null
           rua: number
         }
         Update: {
@@ -499,6 +501,7 @@ export type Database = {
           capacidade?: number
           id?: string
           niveis?: number
+          produto_id?: string | null
           rua?: number
         }
         Relationships: [
@@ -507,6 +510,13 @@ export type Database = {
             columns: ["area_id"]
             isOneToOne: false
             referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ruas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
             referencedColumns: ["id"]
           },
         ]
@@ -561,6 +571,20 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      paletes_fora_de_ordem: {
+        Args: { p_galpao_id: string }
+        Returns: {
+          area: string
+          codigo: string
+          endereco: string
+          palete_id: string
+          posicao: number
+          rua: number
+          sugerido_endereco: string
+          sugerido_posicao: number
+          validade: string
+        }[]
       }
       previa_saida: {
         Args: {
@@ -679,6 +703,35 @@ export type Database = {
           p_palete_id: string
         }
         Returns: undefined
+      }
+      rua_do_palete: {
+        Args: { p_area: string; p_galpao_id: string; p_rua: number }
+        Returns: {
+          area: string
+          area_id: string
+          capacidade: number
+          id: string
+          niveis: number
+          produto_id: string | null
+          rua: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ruas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      sugerir_ruas_fefo: {
+        Args: { p_galpao_id: string; p_paletes?: number; p_produto_id: string }
+        Returns: {
+          area: string
+          livres: number
+          ocupados: number
+          prioridade: number
+          produto_atual: string
+          rua: number
+        }[]
       }
     }
     Enums: {
