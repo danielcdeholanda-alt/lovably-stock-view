@@ -212,6 +212,11 @@ function FormEntrada({ itens }: { itens: ItemEstoque[] }) {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!produto) return toast.error("Informe um código de produto válido");
+    if (ruaBloqueada)
+      return toast.error(
+        `A rua ${area}-${String(rua).padStart(2, "0")} já armazena ${ocupanteRua?.codigo}. Cada rua só pode ter um produto.`,
+      );
+
     const qtd = Number(quantidade);
     if (!qtd || qtd <= 0) return toast.error("Informe a quantidade de caixas por palete");
     const nPaletes = Number(paletes);
